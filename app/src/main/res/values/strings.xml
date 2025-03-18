@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">XRExp</string>
+
+    <string name="hello_android_xr">Hello Android XR.</string>
+    <string name="hello_video_android_xr">Hello Video for  Android XR.</string>
+
+    <string name="switch_to_home_space_mode">Switch to Home Space Mode</string>
+    <string name="switch_to_full_space_mode">Switch to Full Space Mode</string>
+    <string name="set_passthrough">Set passthrough</string>
+    <string name="enable_passthrough">Enable passthrough</string>
+    <string name="disable_passthrough">Disable passthrough</string>
+    <string name="replace_virtual_environment">Replace virtual environment</string>
+    <string name="set_virtual_environment">Set virtual environment</string>
+
+    <string name="primary_title">Primary card title</string>
+    <string name="primary_description">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla vel lorem augue. Integer dapibus fermentum varius. Quisque non pellentesque diam. Fusce ac posuere dui. Nullam in congue lacus, at viverra felis. Duis dapibus mi sed orci rutrum ornare. Nunc ac fringilla enim. Fusce tempor nec dui vitae placerat.\n\nEtiam sit amet auctor massa, sit amet dictum lacus. Donec ac rutrum justo, sit amet condimentum tortor. Nam vitae molestie nisi. Nam vestibulum mi euismod euismod tristique. Mauris ut lorem vestibulum, blandit neque et, iaculis velit. Donec pulvinar dignissim placerat. Vivamus tincidunt feugiat sagittis. Mauris pellentesque dui vel arcu pulvinar tempus. Pellentesque consequat ultrices nisl sed fringilla. Aenean vitae mauris ipsum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Fusce at facilisis turpis, vitae varius risus. Cras a tellus vehicula, porttitor nunc tincidunt, dignissim orci. Etiam ornare enim ut urna interdum fringilla. Donec ultricies imperdiet nisi, quis sollicitudin diam faucibus vitae. In vitae feugiat mi, mattis convallis est.</string>
+    <string name="secondary_title">Secondary card title</string>
+    <string name="secondary_description">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus ante mi, accumsan eu lacus ut, eleifend interdum est. Aenean consectetur orci ac ex fermentum faucibus.</string>
+
+</resources>

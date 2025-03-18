@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- For video stream -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- region Dangerous Permissions -->
+
+    <!-- deprecated -->
+    <uses-permission android:name="android.permission.SCENE_UNDERSTANDING" />
+
+    <!--
+        Use cases requiring this permission
+            - Tracking hand joint poses and angular and linear velocities; Using a mesh representation of the user's hands
+        Jetpack XR SDK features that require this permission:
+            - Hand state and joint poses
+     -->
+    <uses-permission android:name="android.permission.HAND_TRACKING" />
+
+    <!--
+        Use cases requiring this permission:
+            - Light estimation; projecting passthrough onto mesh surfaces; performing raycasts against
+              trackables in the environment; plane tracking; object tracking; persistent anchors.
+        Jetpack XR SDK features that require this permission:
+             - Plane tracking
+             - Hit testing
+             - Anchor persistence
+    -->
+    <uses-permission android:name="android.permission.SCENE_UNDERSTANDING_COARSE" />
+
+    <!--
+        Use cases requiring this permission:
+            - Depth texture
+        Jetpack XR SDK features that require this permission:
+            n/a
+    -->
+    <uses-permission android:name="android.permission.SCENE_UNDERSTANDING_FINE" />
+
+    <!-- endregion -->
+
+    <!-- This is necessary due to a known issue causing a higher minSDK than intended -->
+    <!-- copy/paste this from github sample, but in this project i set min sdk to 34 -->
+    <uses-sdk tools:overrideLibrary="androidx.xr.scenecore, androidx.xr.compose"/>
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.XRExp"
+        tools:targetApi="31"
+        tools:ignore="ObsoleteSdkInt">
+
+        <activity
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_HOME_SPACE_MANAGED" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".MainActivity">
+            <!-- This will start app in HOME space mode by default at beginning (https://bit.ly/3CB1q0p) -->
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_HOME_SPACE_MANAGED" />
+        </activity>
+
+        <activity android:name=".Main3DActivity" android:launchMode="singleTask">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED" />
+        </activity>
+
+        <activity android:name=".Main3DAnimActivity" android:launchMode="singleTask">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED" />
+        </activity>
+
+        <activity android:name=".MainEnvironmentActivity" android:launchMode="singleTask">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED" />
+        </activity>
+
+        <activity android:name=".MainVideoActivity">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_HOME_SPACE_MANAGED" />
+        </activity>
+
+        <activity android:name=".m3.M3MainActivity">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_HOME_SPACE_MANAGED" />
+        </activity>
+
+        <activity android:name=".arcore.MainActivity"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED"/>
+        </activity>
+        <activity android:name=".arcore.helloar.HelloArActivity"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+        </activity>
+        <activity android:name=".arcore.persistentanchors.PersistentAnchorsActivity"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+        </activity>
+        <activity android:name=".arcore.handtracking.HandTrackingActivity"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+        </activity>
+
+        <activity android:name=".arcore.ExpArCoreActivity"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED"/>
+        </activity>
+
+        <activity android:name=".arcore.ExpHandsActivity"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED"/>
+        </activity>
+
+        <activity android:name=".audio.AudioActivity"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED"/>
+        </activity>
+
+    </application>
+
+</manifest>
