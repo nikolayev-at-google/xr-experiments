@@ -60,11 +60,13 @@ fun PositionalAudioControlPanel(
 ) {
     val uiState = viewModel.uiState.value
     val session = LocalSession.current
+    val context = LocalContext.current
 
     if (session != null)
         LaunchedEffect(Unit) {
             Log.i(TAG, "PositionalAudioControlPanel  -  LaunchedEffect")
             viewModel.loadModel(session)
+            viewModel.loadSounds(context)
         }
 
     Column(
@@ -146,7 +148,6 @@ fun PositionalAudioControlPanel(
     if (uiState.showDialog) {
         Subspace {
             SpatialColumn {
-                val context = LocalContext.current
                 val localSpatialCapabilities = LocalSpatialCapabilities.current
                 val model = viewModel.gltfModel.collectAsStateWithLifecycle()
                 var modelEntity by remember { mutableStateOf<GltfModelEntity?>(null) }

@@ -2,6 +2,8 @@ package com.example.xrexp.audio.positional
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION
+import android.media.AudioAttributes.USAGE_ASSISTANCE_SONIFICATION
 import android.media.SoundPool
 import android.util.Log
 import androidx.compose.runtime.State
@@ -12,8 +14,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.xr.runtime.math.Pose
 import androidx.xr.runtime.math.Quaternion
 import androidx.xr.runtime.math.Vector3
+import androidx.xr.scenecore.Entity
 import androidx.xr.scenecore.GltfModel
+import androidx.xr.scenecore.PointSourceAttributes
 import androidx.xr.scenecore.Session
+import androidx.xr.scenecore.SpatialSoundPool
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +30,20 @@ class PositionalAudioControlViewModel : ViewModel() {
     companion object {
         private const val TAG = "PositionalAudioVM"
         private const val GLB_MODEL = "models/xyzArrows.glb"
+
+        val soundResources = listOf(
+            0 to "audio/mechanical_clock_ring.ogg",
+            1 to "audio/media_sound_drums.ogg",
+            2 to "audio/media_sound_guitar.ogg",
+            3 to "audio/media_sound_perc.ogg"
+        )
+
+        val soundNames = listOf(
+            "mechanical_clock_ring.ogg",
+            "media_sound_drums.ogg",
+            "media_sound_guitar.ogg",
+            "media_sound_perc.ogg"
+        )
     }
 
     private var soundPool: SoundPool? = null
@@ -65,7 +84,10 @@ class PositionalAudioControlViewModel : ViewModel() {
 
     init {
         // Initialize with some data
-        loadItems()
+        // In a real app, this might come from a repository or network call
+        _items.value = soundNames
+
+        initializeSoundPool()
     }
 
     override fun onCleared() {
@@ -113,10 +135,6 @@ class PositionalAudioControlViewModel : ViewModel() {
         _modelPose.value = Pose()
     }
 
-    fun onDismissDialog() {
-        _uiState.value = _uiState.value.copy(showDialog = false)
-    }
-
     fun onItemSelected(item: String) {
         _selectedItem.value = item
         _isDropdownExpanded.value = false
@@ -126,44 +144,31 @@ class PositionalAudioControlViewModel : ViewModel() {
         _isDropdownExpanded.value = expanded
     }
 
-    fun initializeSoundPool() {
-        // Configure audio attributes
-        val audioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_GAME)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
-
-        // Create SoundPool
-        soundPool = SoundPool.Builder()
-            .setMaxStreams(10)
-            .setAudioAttributes(audioAttributes)
-            .build()
-
-        // Set load listener
-        soundPool?.setOnLoadCompleteListener { _, sampleId, status ->
-            val soundIndex = soundIds.entries.find { it.value == sampleId }?.key ?: return@setOnLoadCompleteListener
-            if (status == 0) { // 0 means success
-                updateSoundState(soundIndex, isLoaded = true)
-            }
-        }
-    }
-
-    fun loadSounds(context: Context, soundResources: List<Pair<Int, Int>>) {
+    fun loadSounds(context: Context) {
         viewModelScope.launch {
-            soundResources.forEach { (index, resId) ->
-                val soundName = context.resources.getResourceEntryName(resId)
-                _soundsState.value += (index to SoundState(name = soundName))
-
+            soundResources.forEach { (index, assetName) ->
+                val soundEffect = context.assets.openFd(assetName)
+                _soundsState.value += (index to SoundState(name = assetName))
                 soundPool?.let { pool ->
-                    val soundId = pool.load(context, resId, 1)
-                    soundIds[index] = soundId
+                    val pointSoundId = pool.load(soundEffect, 1)
+                    soundIds[index] = pointSoundId
                 }
             }
         }
     }
 
-    fun playSound(soundIndex: Int) {
-        val soundId = soundIds[soundIndex] ?: return
+    fun playSound(xrSession : Session, entity: Entity, soundIndex: Int) {
+
+        soundIds[soundIndex] ?: return
+
+        /**
+         *
+         */
+        val maxVolume = 1F
+        val lowPriority = 0
+        val infiniteLoop = -1
+        val normalSpeed = 1F
+        val pointSource = PointSourceAttributes(entity)
 
         soundPool?.let { pool ->
             // Stop if already playing
@@ -172,7 +177,17 @@ class PositionalAudioControlViewModel : ViewModel() {
             }
 
             // Play sound
-            val streamId = pool.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f)
+            val streamId = SpatialSoundPool.play(
+                session = xrSession,
+                soundPool = pool,
+                soundID = soundIndex,
+                attributes = pointSource,
+                volume = maxVolume,
+                priority = lowPriority,
+                loop = infiniteLoop,
+                rate = normalSpeed
+            )
+
             if (streamId > 0) {
                 playingStreams[soundIndex] = streamId
                 pausedStreams.remove(soundIndex)
@@ -214,12 +229,37 @@ class PositionalAudioControlViewModel : ViewModel() {
         }
     }
 
+    private fun initializeSoundPool() {
+
+        // Configure audio attributes
+        val audioAttributes = AudioAttributes.Builder()
+            .setContentType(CONTENT_TYPE_SONIFICATION)
+            .setUsage(USAGE_ASSISTANCE_SONIFICATION)
+            .build()
+
+        // Create SoundPool
+        soundPool = SoundPool.Builder()
+            .setMaxStreams(10)
+            .setAudioAttributes(audioAttributes)
+            .build()
+
+        // Set load listener
+        soundPool?.setOnLoadCompleteListener { _, sampleId, status ->
+            val soundIndex = soundIds.entries.find { it.value == sampleId }?.key ?: return@setOnLoadCompleteListener
+            if (status == 0) { // 0 means success
+                updateSoundState(soundIndex, isLoaded = true)
+            }
+        }
+    }
+
     private fun updateSoundState(
         soundIndex: Int,
         isLoaded: Boolean? = null,
         isPlaying: Boolean? = null,
         isPaused: Boolean? = null
     ) {
+        Log.d(TAG, "updateSoundState($soundIndex, $isLoaded, $isPlaying, $isPaused)")
+
         val currentState = _soundsState.value[soundIndex] ?: return
         val newState = currentState.copy(
             isLoaded = isLoaded ?: currentState.isLoaded,
@@ -235,15 +275,4 @@ class PositionalAudioControlViewModel : ViewModel() {
             .translate(Vector3(0f, 0f, -_uiState.value.distance))
     }
 
-    private fun loadItems() {
-        viewModelScope.launch {
-            // In a real app, this might come from a repository or network call
-            _items.value = listOf(
-                "mechanical_clock_ring.ogg",
-                "media_sound_drums.ogg",
-                "media_sound_guitar.ogg",
-                "media_sound_perc.ogg"
-            )
-        }
-    }
 }
