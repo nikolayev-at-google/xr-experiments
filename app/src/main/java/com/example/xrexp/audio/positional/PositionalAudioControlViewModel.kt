@@ -77,8 +77,11 @@ class PositionalAudioControlViewModel : ViewModel() {
     private val _uiState = mutableStateOf(PositionalAudioControlUiState())
     val uiState: State<PositionalAudioControlUiState> = _uiState
 
-    private var _gltfModelEntity : MutableStateFlow<GltfModelEntity?> = MutableStateFlow(null)
-    val gltfModelEntity : StateFlow<GltfModelEntity?> = _gltfModelEntity.asStateFlow()
+    private var _gltfModel : MutableStateFlow<GltfModel?> = MutableStateFlow(null)
+    val gltfModel : StateFlow<GltfModel?> = _gltfModel.asStateFlow()
+
+    private val _modelPose: MutableStateFlow<Pose> = MutableStateFlow(Pose())
+    val modelPose : StateFlow<Pose> = _modelPose.asStateFlow()
 
 
     init {
@@ -98,8 +101,7 @@ class PositionalAudioControlViewModel : ViewModel() {
     suspend fun loadModel(scenecoreSession : Session) {
         Log.i(TAG, "loadModel($scenecoreSession)")
 
-        val model : GltfModel = GltfModel.create(scenecoreSession, GLB_MODEL).await()
-        _gltfModelEntity.value = GltfModelEntity.create(scenecoreSession, model)
+        _gltfModel.value = GltfModel.create(scenecoreSession, GLB_MODEL).await()
     }
 
     fun onAngleChanged(value: Float) {
@@ -132,7 +134,7 @@ class PositionalAudioControlViewModel : ViewModel() {
             distance = 0f,
             showDialog = false
         )
-        _gltfModelEntity.value?.setPose(Pose.Identity)
+        _modelPose.value = Pose()
     }
 
     fun onItemSelected(item: String) {
@@ -270,11 +272,9 @@ class PositionalAudioControlViewModel : ViewModel() {
     }
 
     private fun rotateAndTranslate() {
-
-        _gltfModelEntity.value?.setPose(
-            Pose.Identity.rotate(Quaternion.fromEulerAngles(0f, _uiState.value.angle, 0f))
-                .translate(Vector3(0f, 0f, -_uiState.value.distance))
-        )
+        _modelPose.value = Pose.Identity
+            .rotate(Quaternion.fromEulerAngles(0f, _uiState.value.angle, 0f))
+            .translate(Vector3(0f, 0f, -_uiState.value.distance))
     }
 
 }
