@@ -92,6 +92,9 @@ dependencies {
     // Use in environments that do not support OpenXR
     testImplementation(libs.androidx.runtime.testing)
 
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(composeBom)

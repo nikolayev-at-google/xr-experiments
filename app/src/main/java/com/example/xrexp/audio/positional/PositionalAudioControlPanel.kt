@@ -149,21 +149,21 @@ fun PositionalAudioControlPanel(
         Subspace {
             SpatialColumn {
                 val localSpatialCapabilities = LocalSpatialCapabilities.current
-                val model = viewModel.gltfModel.collectAsStateWithLifecycle()
+//                val model = viewModel.gltfModel.collectAsStateWithLifecycle()
 //                var modelEntity by remember { mutableStateOf<GltfModelEntity?>(null) }
                 val modelPose = viewModel.modelPose.collectAsStateWithLifecycle()
 
                 Volume { volumeEntity ->
                     // check for spatial capabilities
                     if (localSpatialCapabilities.isContent3dEnabled) {
-                        model.value?.let { model ->
-                            if (session != null) {
-//                                GltfModelEntity.create(session, model)?.let {
-//                                    modelEntity = it
-//                                    volumeEntity.addChild(it)
-//                                }
-                            }
-                        }
+//                        model.value?.let { model ->
+//                            if (session != null) {
+////                                GltfModelEntity.create(session, model)?.let {
+////                                    modelEntity = it
+////                                    volumeEntity.addChild(it)
+////                                }
+//                            }
+//                        }
                     } else {
                         Toast.makeText(context, "3D content not enabled", Toast.LENGTH_LONG).show()
                     }
