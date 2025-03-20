@@ -1,5 +1,6 @@
 package com.example.xrexp.audio.positional
 
+import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -39,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.os.HandlerCompat.postDelayed
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.xr.compose.platform.LocalSession
@@ -61,6 +63,7 @@ fun PositionalAudioControlPanel(
     val uiState = viewModel.uiState.value
     val session = LocalSession.current
     val context = LocalContext.current
+    val modelEntity = remember { mutableStateOf<GltfModelEntity?>(null) }
 
     if (session != null)
         LaunchedEffect(Unit) {
@@ -101,7 +104,11 @@ fun PositionalAudioControlPanel(
         ) {
             // Play Button
             Button(
-                onClick = { viewModel.onPlayClicked() },
+                onClick = {
+                    Handler().postDelayed({
+                        viewModel.onPlayClicked(session, modelEntity.value)
+                    }, 1000)
+                },
                 enabled = !uiState.isPlaying
             ) {
                 Icon(
@@ -150,15 +157,14 @@ fun PositionalAudioControlPanel(
             SpatialColumn {
                 val localSpatialCapabilities = LocalSpatialCapabilities.current
                 val model = viewModel.gltfModel.collectAsStateWithLifecycle()
-                var modelEntity by remember { mutableStateOf<GltfModelEntity?>(null) }
                 val modelPose = viewModel.modelPose.collectAsStateWithLifecycle()
                 Volume { volumeEntity ->
                     // check for spatial capabilities
                     if (localSpatialCapabilities.isContent3dEnabled) {
                        model.value?.let { model ->
                            if (session != null) {
-                               GltfModelEntity.create(session, model)?.let {
-                                   modelEntity = it
+                               GltfModelEntity.create(session, model).let {
+                                   modelEntity.value = it
                                    volumeEntity.addChild(it)
                                }
                            }
@@ -168,9 +174,9 @@ fun PositionalAudioControlPanel(
                     }
                 }
 
-                modelEntity?.let {
-                    modelEntity?.setPose(modelPose.value)
-                    modelEntity?.setScale(0.5f)
+                modelEntity.value?.let {
+                    modelEntity.value?.setPose(modelPose.value)
+                    modelEntity.value?.setScale(0.5f)
                 }
             }
         }

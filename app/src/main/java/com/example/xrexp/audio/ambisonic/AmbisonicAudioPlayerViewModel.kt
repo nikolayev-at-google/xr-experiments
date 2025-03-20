@@ -1,61 +1,63 @@
 package com.example.xrexp.audio.ambisonic
 
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class AmbisonicAudioPlayerViewModel : ViewModel() {
-    private var player: ExoPlayer? = null
+    private var mediaPlayer: MediaPlayer? = null
 
     // UI State
-    var isAudioPlaying by  mutableStateOf(false)
+    var isPlaying by mutableStateOf(false)
         private set
-    var currentPosition by mutableLongStateOf(0L)
+    var currentPosition by mutableStateOf(0)
         private set
-    var audioDuration by mutableLongStateOf(0L)
+    var audioDuration by mutableStateOf(0)
         private set
-    var isLooping by mutableStateOf(true)
+    var isLooping by mutableStateOf(false)
         private set
     var isPauseEnabled by mutableStateOf(false)
         private set
     var isStopEnabled by mutableStateOf(false)
         private set
 
-    private val mediaUrl = "https://actions.google.com/sounds/v1/science_fiction/ringing_ambient_background.ogg"
+    private val mediaUrl = "https://actions.google.com/sounds/v1/weather/desert_howling_wind.ogg"
 
     fun initialize(context: Context) {
-        if (player == null) {
-            player = ExoPlayer.Builder(context).build().apply {
-                addListener(object : Player.Listener {
-                    override fun onPlaybackStateChanged(state: Int) {
-                        if (state == Player.STATE_READY) {
-                            audioDuration = this@apply.duration
-                        }
-                    }
+        if (mediaPlayer == null) {
+            mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build()
+                )
 
-                    override fun onIsPlayingChanged(playing: Boolean) {
-                        isAudioPlaying = playing
-                        isPauseEnabled = playing
-                        isStopEnabled = playing || currentPosition > 0
-                    }
-                })
+                setOnPreparedListener { mp ->
+                    audioDuration = mp.duration
+                }
 
-                val mediaItem = MediaItem.fromUri(mediaUrl)
-                setMediaItem(mediaItem)
-                prepare()
-                playWhenReady = false
-                repeatMode = if (isLooping) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+                setOnCompletionListener {
+                    if (!isLooping) {
+                        stop() // Reset to initial state when playback completes
+                    }
+                }
+
+                try {
+                    setDataSource(mediaUrl)
+                    prepareAsync()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
 
             // Start position tracking
@@ -66,8 +68,10 @@ class AmbisonicAudioPlayerViewModel : ViewModel() {
     private fun startPositionTracking() {
         viewModelScope.launch {
             while (isActive) {
-                player?.let {
-                    currentPosition = it.currentPosition
+                mediaPlayer?.let {
+                    if (isPlaying) {
+                        currentPosition = it.currentPosition
+                    }
                 }
                 delay(100) // Update every 100 ms
             }
@@ -75,21 +79,40 @@ class AmbisonicAudioPlayerViewModel : ViewModel() {
     }
 
     fun play() {
-        player?.let {
-            it.play()
-            isPauseEnabled = true
-            isStopEnabled = true
+        mediaPlayer?.let {
+            if (!isPlaying) {
+                it.start()
+                isPlaying = true
+                isPauseEnabled = true
+                isStopEnabled = true
+            }
         }
     }
 
     fun pause() {
-        player?.pause()
+        mediaPlayer?.let {
+            if (it.isPlaying) {
+                it.pause()
+                isPlaying = false
+                isPauseEnabled = false
+                isStopEnabled = true
+            }
+        }
     }
 
     fun stop() {
-        player?.let {
-            it.pause()
+        mediaPlayer?.let {
+            if (it.isPlaying) {
+                it.stop()
+                // We need to prepare again after stop
+                try {
+                    it.prepare()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
             it.seekTo(0)
+            isPlaying = false
             currentPosition = 0
             isPauseEnabled = false
             isStopEnabled = false
@@ -98,21 +121,19 @@ class AmbisonicAudioPlayerViewModel : ViewModel() {
 
     fun toggleLoop() {
         isLooping = !isLooping
-        player?.let {
-            it.repeatMode = if (isLooping) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
-        }
+        mediaPlayer?.isLooping = isLooping
     }
 
     override fun onCleared() {
-        player?.release()
-        player = null
+        mediaPlayer?.release()
+        mediaPlayer = null
         super.onCleared()
     }
 
     // Helper function to format time in mm:ss format
-    fun formatTime(millis: Long): String {
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(millis)
-        val seconds = TimeUnit.MILLISECONDS.toSeconds(millis) -
+    fun formatTime(millis: Int): String {
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(millis.toLong())
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(millis.toLong()) -
                 TimeUnit.MINUTES.toSeconds(minutes)
         return String.format("%02d:%02d", minutes, seconds)
     }

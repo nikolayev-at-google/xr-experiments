@@ -118,12 +118,13 @@ class PositionalAudioControlViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(loop = checked)
     }
 
-    fun onPlayClicked() {
+    fun onPlayClicked(xrSession : Session?, entity: Entity?) {
         _uiState.value = _uiState.value.copy(
             isPlaying = true,
             slidersEnabled = true,
             showDialog = true
         )
+        playSound(xrSession, entity)
     }
 
     fun onStopClicked() {
@@ -135,6 +136,7 @@ class PositionalAudioControlViewModel : ViewModel() {
             showDialog = false
         )
         _modelPose.value = Pose()
+        stopSound()
     }
 
     fun onItemSelected(item: String) {
@@ -159,7 +161,16 @@ class PositionalAudioControlViewModel : ViewModel() {
         }
     }
 
-    fun playSound(xrSession : Session, entity: Entity, soundIndex: Int) {
+    fun playSound(xrSession : Session?, entity: Entity?, soundIndex: Int = 0) {
+
+        if (xrSession == null) {
+            Log.e(TAG, "playSound: xrSession is null")
+            return
+        }
+        if (entity == null) {
+            Log.e(TAG, "playSound: entity is null")
+            return
+        }
 
         soundIds[soundIndex] ?: return
 
@@ -168,7 +179,7 @@ class PositionalAudioControlViewModel : ViewModel() {
          */
         val maxVolume = 1F
         val lowPriority = 0
-        val infiniteLoop = -1
+        val infiniteLoop = if (_uiState.value.loop) -1 else 0
         val normalSpeed = 1F
         val pointSource = PointSourceAttributes(entity)
 
@@ -220,7 +231,7 @@ class PositionalAudioControlViewModel : ViewModel() {
         }
     }
 
-    fun stopSound(soundIndex: Int) {
+    fun stopSound(soundIndex: Int = 0) {
         val streamId = playingStreams[soundIndex] ?: pausedStreams[soundIndex] ?: return
 
         soundPool?.let { pool ->
@@ -241,7 +252,6 @@ class PositionalAudioControlViewModel : ViewModel() {
 
         // Create SoundPool
         soundPool = SoundPool.Builder()
-            .setMaxStreams(10)
             .setAudioAttributes(audioAttributes)
             .build()
 
