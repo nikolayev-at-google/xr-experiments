@@ -31,9 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -46,7 +43,6 @@ import androidx.xr.compose.platform.LocalSpatialCapabilities
 import androidx.xr.compose.spatial.Subspace
 import androidx.xr.compose.subspace.SpatialColumn
 import androidx.xr.compose.subspace.Volume
-//import androidx.xr.scenecore.GltfModelEntity
 import com.example.xrexp.ui.theme.LocalSpacing
 import com.example.xrexp.ui.theme.XRExpTheme
 
@@ -149,30 +145,18 @@ fun PositionalAudioControlPanel(
         Subspace {
             SpatialColumn {
                 val localSpatialCapabilities = LocalSpatialCapabilities.current
-//                val model = viewModel.gltfModel.collectAsStateWithLifecycle()
-//                var modelEntity by remember { mutableStateOf<GltfModelEntity?>(null) }
-                val modelPose = viewModel.modelPose.collectAsStateWithLifecycle()
-
+                val modelEntity = viewModel.gltfModelEntity.collectAsStateWithLifecycle()
                 Volume { volumeEntity ->
                     // check for spatial capabilities
                     if (localSpatialCapabilities.isContent3dEnabled) {
-//                        model.value?.let { model ->
-//                            if (session != null) {
-////                                GltfModelEntity.create(session, model)?.let {
-////                                    modelEntity = it
-////                                    volumeEntity.addChild(it)
-////                                }
-//                            }
-//                        }
+                        modelEntity.value?.let {
+                            it.setScale(0.4f)
+                            volumeEntity.addChild(it)
+                        }
                     } else {
                         Toast.makeText(context, "3D content not enabled", Toast.LENGTH_LONG).show()
                     }
                 }
-
-//                modelEntity?.let {
-//                    modelEntity?.setPose(modelPose.value)
-//                    modelEntity?.setScale(0.5f)
-//                }
             }
         }
     }
@@ -226,7 +210,7 @@ fun DropDownWidget(
             .height(220.dp)
     ) {
         OutlinedTextField(
-            value = selectedItem ?: "Select an sound",
+            value = selectedItem, // ?: "Select an sound",
             onValueChange = { },
             readOnly = true,
             modifier = Modifier
