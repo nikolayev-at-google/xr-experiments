@@ -46,7 +46,7 @@ import androidx.xr.compose.platform.LocalSpatialCapabilities
 import androidx.xr.compose.spatial.Subspace
 import androidx.xr.compose.subspace.SpatialColumn
 import androidx.xr.compose.subspace.Volume
-import androidx.xr.scenecore.GltfModelEntity
+//import androidx.xr.scenecore.GltfModelEntity
 import com.example.xrexp.ui.theme.LocalSpacing
 import com.example.xrexp.ui.theme.XRExpTheme
 
@@ -150,7 +150,7 @@ fun PositionalAudioControlPanel(
             SpatialColumn {
                 val localSpatialCapabilities = LocalSpatialCapabilities.current
                 val model = viewModel.gltfModel.collectAsStateWithLifecycle()
-                var modelEntity by remember { mutableStateOf<GltfModelEntity?>(null) }
+//                var modelEntity by remember { mutableStateOf<GltfModelEntity?>(null) }
                 val modelPose = viewModel.modelPose.collectAsStateWithLifecycle()
 
                 Volume { volumeEntity ->
@@ -158,10 +158,10 @@ fun PositionalAudioControlPanel(
                     if (localSpatialCapabilities.isContent3dEnabled) {
                         model.value?.let { model ->
                             if (session != null) {
-                                GltfModelEntity.create(session, model)?.let {
-                                    modelEntity = it
-                                    volumeEntity.addChild(it)
-                                }
+//                                GltfModelEntity.create(session, model)?.let {
+//                                    modelEntity = it
+//                                    volumeEntity.addChild(it)
+//                                }
                             }
                         }
                     } else {
@@ -169,10 +169,10 @@ fun PositionalAudioControlPanel(
                     }
                 }
 
-                modelEntity?.let {
-                    modelEntity?.setPose(modelPose.value)
-                    modelEntity?.setScale(0.5f)
-                }
+//                modelEntity?.let {
+//                    modelEntity?.setPose(modelPose.value)
+//                    modelEntity?.setScale(0.5f)
+//                }
             }
         }
     }

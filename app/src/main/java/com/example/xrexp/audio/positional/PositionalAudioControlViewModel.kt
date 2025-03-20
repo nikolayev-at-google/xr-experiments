@@ -16,6 +16,7 @@ import androidx.xr.runtime.math.Quaternion
 import androidx.xr.runtime.math.Vector3
 import androidx.xr.scenecore.Entity
 import androidx.xr.scenecore.GltfModel
+import androidx.xr.scenecore.GltfModelEntity
 import androidx.xr.scenecore.PointSourceAttributes
 import androidx.xr.scenecore.Session
 import androidx.xr.scenecore.SpatialSoundPool
@@ -76,8 +77,11 @@ class PositionalAudioControlViewModel : ViewModel() {
     private val _uiState = mutableStateOf(PositionalAudioControlUiState())
     val uiState: State<PositionalAudioControlUiState> = _uiState
 
-    private var _gltfModel : MutableStateFlow<GltfModel?> = MutableStateFlow(null)
-    val gltfModel : StateFlow<GltfModel?> = _gltfModel.asStateFlow()
+//    private var _gltfModel : MutableStateFlow<GltfModel?> = MutableStateFlow(null)
+//    val gltfModel : StateFlow<GltfModel?> = _gltfModel.asStateFlow()
+
+    private var _gltfModelEntity : MutableStateFlow<GltfModelEntity?> = MutableStateFlow(null)
+    val gltfModelEntity : StateFlow<GltfModelEntity?> = _gltfModelEntity.asStateFlow()
 
     private val _modelPose: MutableStateFlow<Pose> = MutableStateFlow(Pose())
     val modelPose : StateFlow<Pose> = _modelPose.asStateFlow()
@@ -99,7 +103,8 @@ class PositionalAudioControlViewModel : ViewModel() {
     suspend fun loadModel(scenecoreSession : Session) {
         Log.i(TAG, "loadModel($scenecoreSession)")
 
-        _gltfModel.value = GltfModel.create(scenecoreSession, GLB_MODEL).await()
+        val model : GltfModel = GltfModel.create(scenecoreSession, GLB_MODEL).await()
+        _gltfModelEntity.value = GltfModelEntity.create(scenecoreSession, model)
     }
 
     fun onAngleChanged(value: Float) {
