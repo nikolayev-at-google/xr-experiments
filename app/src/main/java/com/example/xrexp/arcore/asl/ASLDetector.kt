@@ -13,8 +13,7 @@ import androidx.xr.runtime.math.Pose
 import androidx.xr.arcore.HandJointType
 
 /**
- * A detector for American Sign Language (ASL) hand signs.
- * Currently supports detection for signs A, B, C, D, and E.
+ * A detector for American Sign Language (ASL) hand signs with improved detection for A and E.
  */
 @SuppressLint("RestrictedApi")
 object ASLDetector {
@@ -39,7 +38,9 @@ object ASLDetector {
         val fingerExtensions: Map<String, Float> = emptyMap(),
         val fingerCurls: Map<String, Float> = emptyMap(),
         val fingerPositions: Map<String, Vector3> = emptyMap(),
-        val palmOrientation: Vector3 = Vector3()
+        val palmOrientation: Vector3 = Vector3(),
+        // Additional debug data for sign A and E
+        val thumbPositionData: Map<String, Float> = emptyMap()
     )
 
     /**
@@ -53,10 +54,6 @@ object ASLDetector {
 
     /**
      * Detects the current ASL sign from hand tracking data.
-     *
-     * @param handState The state of the hand to analyze
-     * @param includeDebugInfo Whether to include detailed debug information
-     * @return The result containing the detected sign and optional debug info
      */
     fun detectSign(handState: Hand.State, includeDebugInfo: Boolean = DEBUG): Result {
         // Initialize debug info
@@ -88,13 +85,16 @@ object ASLDetector {
         // Calculate palm orientation
         val palmOrientation = calculatePalmOrientation(joints)
 
+        // Additional thumb position data for A and E debugging
+        val thumbPositionData = calculateThumbPositionData(joints)
+
         // Calculate confidence scores for each sign
         val confidenceScores = mapOf(
-            Sign.A to calculateSignAConfidence(joints, fingerExtensions, fingerCurls),
+            Sign.A to calculateSignAConfidence(joints, fingerExtensions, fingerCurls, thumbPositionData),
             Sign.B to calculateSignBConfidence(joints, fingerExtensions, fingerCurls, palmOrientation),
             Sign.C to calculateSignCConfidence(joints, fingerExtensions, fingerCurls, palmOrientation),
             Sign.D to calculateSignDConfidence(joints, fingerExtensions, fingerCurls, palmOrientation),
-            Sign.E to calculateSignEConfidence(joints, fingerExtensions, fingerCurls, palmOrientation)
+            Sign.E to calculateSignEConfidence(joints, fingerExtensions, fingerCurls, palmOrientation, thumbPositionData)
         )
 
         // Determine the most confident sign
@@ -113,12 +113,28 @@ object ASLDetector {
             fingerExtensions = fingerExtensions,
             fingerCurls = fingerCurls,
             fingerPositions = fingerPositions.mapValues { it.value.translation },
-            palmOrientation = palmOrientation
+            palmOrientation = palmOrientation,
+            thumbPositionData = thumbPositionData
         )
 
         if (DEBUG) {
             Log.d(TAG, "ASL Detection: $detectedSign (confidence: ${highestConfidence.format(2)})")
-            Log.d(TAG, "Confidence scores: ${confidenceScores.map { "${it.key}: ${it.value.format(2)}" }}")
+            for ((sign, confidence) in confidenceScores) {
+                Log.d(TAG, "  $sign: ${confidence.format(2)}")
+            }
+
+            // Special debug for A and E
+            if (detectedSign == Sign.A || detectedSign == Sign.E ||
+                confidenceScores[Sign.A]!! > 0.4f || confidenceScores[Sign.E]!! > 0.4f) {
+                Log.d(TAG, "Finger curl values:")
+                for ((finger, curl) in fingerCurls) {
+                    Log.d(TAG, "  $finger curl: ${curl.format(2)}")
+                }
+                Log.d(TAG, "Thumb position data:")
+                for ((key, value) in thumbPositionData) {
+                    Log.d(TAG, "  $key: ${value.format(2)}")
+                }
+            }
         }
 
         return Result(
@@ -126,6 +142,64 @@ object ASLDetector {
             confidence = highestConfidence,
             debugInfo = if (includeDebugInfo) debugInfo else null
         )
+    }
+
+    /**
+     * Calculate detailed thumb position data for better A and E detection
+     */
+    private fun calculateThumbPositionData(joints: Map<HandJointType, Pose>): Map<String, Float> {
+        val thumbPositionData = mutableMapOf<String, Float>()
+
+        val thumbTip = joints[HandJointType.THUMB_TIP]?.translation ?: return thumbPositionData
+
+        // Distance from thumb to each finger's proximal joint
+        for ((finger, jointType) in listOf(
+            "index" to HandJointType.INDEX_PROXIMAL,
+            "middle" to HandJointType.MIDDLE_PROXIMAL,
+            "ring" to HandJointType.RING_PROXIMAL,
+            "little" to HandJointType.LITTLE_PROXIMAL
+        )) {
+            val proximalPos = joints[jointType]?.translation ?: continue
+            thumbPositionData["thumb_to_${finger}_proximal"] = distance(thumbTip, proximalPos)
+        }
+
+        // Relative height of thumb compared to other finger tips
+        val wristPos = joints[HandJointType.WRIST]?.translation ?: return thumbPositionData
+        val palmPos = joints[HandJointType.PALM]?.translation ?: return thumbPositionData
+
+        // Create a local coordinate system for the hand
+        val wristToPalm = normalize(createVector(wristPos, palmPos))
+
+        // Calculate relative heights in hand's local space
+        for ((finger, jointType) in listOf(
+            "thumb" to HandJointType.THUMB_TIP,
+            "index" to HandJointType.INDEX_TIP,
+            "middle" to HandJointType.MIDDLE_TIP,
+            "ring" to HandJointType.RING_TIP,
+            "little" to HandJointType.LITTLE_TIP
+        )) {
+            val tipPos = joints[jointType]?.translation ?: continue
+            val wristToTip = createVector(wristPos, tipPos)
+
+            // Project onto wrist-to-palm direction to get "height" in hand's frame
+            thumbPositionData["${finger}_height"] = dotProduct(wristToTip, wristToPalm)
+        }
+
+        // Thumb position relative to palm
+        val thumbBase = joints[HandJointType.THUMB_METACARPAL]?.translation ?: return thumbPositionData
+        val indexBase = joints[HandJointType.INDEX_METACARPAL]?.translation ?: return thumbPositionData
+        val littleBase = joints[HandJointType.LITTLE_METACARPAL]?.translation ?: return thumbPositionData
+
+        // Vector across palm from index to little finger metacarpal
+        val acrossPalm = normalize(createVector(indexBase, littleBase))
+
+        // Vector from palm center to thumb tip
+        val palmToThumb = createVector(palmPos, thumbTip)
+
+        // How much the thumb crosses the palm (dot product with across-palm vector)
+        thumbPositionData["thumb_crossing_palm"] = dotProduct(normalize(palmToThumb), acrossPalm)
+
+        return thumbPositionData
     }
 
     /**
@@ -309,40 +383,82 @@ object ASLDetector {
     }
 
     /**
-     * Confidence calculation for ASL Sign A
+     * IMPROVED Confidence calculation for ASL Sign A
      * A fist with the thumb positioned at the side of the fist
      */
     private fun calculateSignAConfidence(
         joints: Map<HandJointType, Pose>,
         fingerExtensions: Map<String, Float>,
-        fingerCurls: Map<String, Float>
+        fingerCurls: Map<String, Float>,
+        thumbPositionData: Map<String, Float>
     ): Float {
         var confidence = 0f
+        val debugDetails = mutableMapOf<String, Float>()
 
-        // For Sign A: All fingers should be curled (low extension, high curl)
-        val indexCurled = fingerCurls["index"]!! < 0.5f && fingerExtensions["index"]!! < 1.2f
-        val middleCurled = fingerCurls["middle"]!! < 0.5f && fingerExtensions["middle"]!! < 1.2f
-        val ringCurled = fingerCurls["ring"]!! < 0.5f && fingerExtensions["ring"]!! < 1.2f
-        val littleCurled = fingerCurls["little"]!! < 0.5f && fingerExtensions["little"]!! < 1.2f
+        // REVISED: For Sign A: All fingers should be curled (low extension, high curl)
+        // Increased extension threshold to 1.3 (was 1.2)
+        // Increased curl threshold to 0.6 (was 0.5)
+        val indexCurled = fingerCurls["index"]!! < 0.6f && fingerExtensions["index"]!! < 1.3f
+        val middleCurled = fingerCurls["middle"]!! < 0.6f && fingerExtensions["middle"]!! < 1.3f
+        val ringCurled = fingerCurls["ring"]!! < 0.6f && fingerExtensions["ring"]!! < 1.3f
+        val littleCurled = fingerCurls["little"]!! < 0.6f && fingerExtensions["little"]!! < 1.3f
 
+        // All fingers should be curled similarly for a fist
+        val fingerCurlConsistency = areValuesSimilar(
+            listOf(
+                fingerCurls["index"]!!,
+                fingerCurls["middle"]!!,
+                fingerCurls["ring"]!!,
+                fingerCurls["little"]!!
+            ),
+            maxDifference = 0.2f
+        )
+
+        // REVISED: Thumb position for Sign A
         // Thumb should be somewhat tucked, but not fully curled like other fingers
-        val thumbTucked = fingerCurls["thumb"]!! < 0.8f && fingerExtensions["thumb"]!! < 1.5f
+        val thumbTucked = fingerCurls["thumb"]!! < 0.9f && fingerExtensions["thumb"]!! < 1.7f
 
-        // Check thumb position relative to index finger
-        val thumbPose = joints[HandJointType.THUMB_TIP]!!.translation
-        val indexProximalPose = joints[HandJointType.INDEX_PROXIMAL]!!.translation
-        val thumbToIndexDist = distance(thumbPose, indexProximalPose)
+        // IMPROVED: Check thumb position relative to index finger
+        // Increased distance threshold to 0.12 (was 0.05)
+        // Also check alternative references for thumb position
+        val thumbToIndexProximalDist = thumbPositionData["thumb_to_index_proximal"] ?: 1.0f
 
         // Thumb should be close to the side of the index finger
-        val thumbCorrectPosition = thumbToIndexDist < 0.05f // Adjust threshold as needed
+        val thumbCorrectPosition = thumbToIndexProximalDist < 0.12f
+
+        // ADDED: Additional checks for A sign
+
+        // Thumb should be lower than other fingers
+        val isThumbLower = (thumbPositionData["thumb_height"] ?: 0f) <
+                (thumbPositionData["index_height"] ?: 0f)
+
+        // Thumb shouldn't cross over the palm too much
+        val thumbNotCrossingPalm = (thumbPositionData["thumb_crossing_palm"] ?: 1.0f) < 0.3f
 
         // Calculate confidence based on all criteria
-        confidence += if (indexCurled) 0.2f else 0f
-        confidence += if (middleCurled) 0.2f else 0f
-        confidence += if (ringCurled) 0.2f else 0f
-        confidence += if (littleCurled) 0.2f else 0f
+        confidence += if (indexCurled) 0.15f else 0f
+        confidence += if (middleCurled) 0.15f else 0f
+        confidence += if (ringCurled) 0.15f else 0f
+        confidence += if (littleCurled) 0.15f else 0f
+        confidence += if (fingerCurlConsistency) 0.05f else 0f
         confidence += if (thumbTucked) 0.1f else 0f
         confidence += if (thumbCorrectPosition) 0.1f else 0f
+        confidence += if (isThumbLower) 0.1f else 0f
+        confidence += if (thumbNotCrossingPalm) 0.05f else 0f
+
+        // Debug logging for sign A
+        if (DEBUG && confidence > 0.5f) {
+            Log.d(TAG, "Sign A details:")
+            Log.d(TAG, "  Index curled: $indexCurled")
+            Log.d(TAG, "  Middle curled: $middleCurled")
+            Log.d(TAG, "  Ring curled: $ringCurled")
+            Log.d(TAG, "  Little curled: $littleCurled")
+            Log.d(TAG, "  Finger curl consistency: $fingerCurlConsistency")
+            Log.d(TAG, "  Thumb tucked: $thumbTucked")
+            Log.d(TAG, "  Thumb correct position: $thumbCorrectPosition ($thumbToIndexProximalDist)")
+            Log.d(TAG, "  Thumb lower than fingers: $isThumbLower")
+            Log.d(TAG, "  Thumb not crossing palm: $thumbNotCrossingPalm")
+        }
 
         return confidence
     }
@@ -417,7 +533,7 @@ object ASLDetector {
         val thumbPos = joints[HandJointType.THUMB_TIP]!!.translation
         val pinkyPos = joints[HandJointType.LITTLE_TIP]!!.translation
         val thumbToPinkyDist = distance(thumbPos, pinkyPos)
-        val cShapeFormed = thumbToPinkyDist < 0.15f // Adjust threshold as needed
+        val cShapeFormed = thumbToPinkyDist < 0.15f
 
         // Calculate confidence based on all criteria
         confidence += if (indexCurved) 0.1f else 0f
@@ -457,7 +573,7 @@ object ASLDetector {
         val thumbPos = joints[HandJointType.THUMB_TIP]!!.translation
         val middlePos = joints[HandJointType.MIDDLE_TIP]!!.translation
         val thumbToMiddleDist = distance(thumbPos, middlePos)
-        val oShapeFormed = thumbToMiddleDist < 0.05f // Adjust threshold as needed
+        val oShapeFormed = thumbToMiddleDist < 0.05f
 
         // Palm should be facing sideways
         val palmFacingSide = abs(palmOrientation.x) > 0.7f
@@ -475,43 +591,68 @@ object ASLDetector {
     }
 
     /**
-     * Confidence calculation for ASL Sign E
+     * IMPROVED Confidence calculation for ASL Sign E
      * Fingers curled in toward palm, thumb tucked across fingers
      */
     private fun calculateSignEConfidence(
         joints: Map<HandJointType, Pose>,
         fingerExtensions: Map<String, Float>,
         fingerCurls: Map<String, Float>,
-        palmOrientation: Vector3
+        palmOrientation: Vector3,
+        thumbPositionData: Map<String, Float>
     ): Float {
         var confidence = 0f
 
-        // For Sign E: All fingers should be curled, but not as tight as a fist
-        val indexPartlyCurled = fingerCurls["index"]!! < 0.6f && fingerCurls["index"]!! > 0.2f
-        val middlePartlyCurled = fingerCurls["middle"]!! < 0.6f && fingerCurls["middle"]!! > 0.2f
-        val ringPartlyCurled = fingerCurls["ring"]!! < 0.6f && fingerCurls["ring"]!! > 0.2f
-        val littlePartlyCurled = fingerCurls["little"]!! < 0.6f && fingerCurls["little"]!! > 0.2f
+        // REVISED: For Sign E: All fingers should be curled, but not as tight as a fist
+        // Widened the range for partly curled fingers
+        val indexPartlyCurled = fingerCurls["index"]!! < 0.65f && fingerCurls["index"]!! > 0.15f
+        val middlePartlyCurled = fingerCurls["middle"]!! < 0.65f && fingerCurls["middle"]!! > 0.15f
+        val ringPartlyCurled = fingerCurls["ring"]!! < 0.65f && fingerCurls["ring"]!! > 0.15f
+        val littlePartlyCurled = fingerCurls["little"]!! < 0.65f && fingerCurls["little"]!! > 0.15f
 
+        // IMPROVED: Thumb position checks for E sign
         // Thumb should be tucked across fingers
         val thumbPosition = fingerCurls["thumb"]!! < 0.7f
 
-        // Thumb should be positioned near middle finger
-        val thumbPos = joints[HandJointType.THUMB_TIP]!!.translation
-        val middlePos = joints[HandJointType.MIDDLE_PROXIMAL]!!.translation
-        val thumbToMiddleDist = distance(thumbPos, middlePos)
-        val thumbPlacement = thumbToMiddleDist < 0.05f // Adjust threshold as needed
+        // REVISED: Thumb should be positioned near middle finger metacarpal or proximal
+        // Increased threshold and checked multiple points
+        val thumbToMiddleProximalDist = thumbPositionData["thumb_to_middle_proximal"] ?: 1.0f
 
+        // Added more alternatives for thumb placement
+        val thumbToIndexProximalDist = thumbPositionData["thumb_to_index_proximal"] ?: 1.0f
+        val thumbPlacement = (thumbToMiddleProximalDist < 0.12f || thumbToIndexProximalDist < 0.12f)
+
+        // ADDED: For E, the thumb should cross the palm significantly
+        val thumbCrossingPalm = (thumbPositionData["thumb_crossing_palm"] ?: 0f) > 0.3f
+
+        // REVISED: Palm orientation check
         // Palm should be facing to the side or slightly forward
-        val palmOriented = palmOrientation.z < -0.5f
+        val palmOriented = (palmOrientation.z < -0.3f) || (abs(palmOrientation.x) > 0.5f)
 
         // Calculate confidence based on all criteria
-        confidence += if (indexPartlyCurled) 0.15f else 0f
-        confidence += if (middlePartlyCurled) 0.15f else 0f
-        confidence += if (ringPartlyCurled) 0.15f else 0f
-        confidence += if (littlePartlyCurled) 0.15f else 0f
-        confidence += if (thumbPosition) 0.2f else 0f
-        confidence += if (thumbPlacement) 0.1f else 0f
+        confidence += if (indexPartlyCurled) 0.12f else 0f
+        confidence += if (middlePartlyCurled) 0.12f else 0f
+        confidence += if (ringPartlyCurled) 0.12f else 0f
+        confidence += if (littlePartlyCurled) 0.12f else 0f
+        confidence += if (thumbPosition) 0.12f else 0f
+        confidence += if (thumbPlacement) 0.15f else 0f
+        confidence += if (thumbCrossingPalm) 0.15f else 0f
         confidence += if (palmOriented) 0.1f else 0f
+
+        // Debug logging for sign E
+        if (DEBUG && confidence > 0.5f) {
+            Log.d(TAG, "Sign E details:")
+            Log.d(TAG, "  Index partly curled: $indexPartlyCurled")
+            Log.d(TAG, "  Middle partly curled: $middlePartlyCurled")
+            Log.d(TAG, "  Ring partly curled: $ringPartlyCurled")
+            Log.d(TAG, "  Little partly curled: $littlePartlyCurled")
+            Log.d(TAG, "  Thumb position: $thumbPosition")
+            Log.d(TAG, "  Thumb placement: $thumbPlacement")
+            Log.d(TAG, "  Thumb to middle proximal dist: $thumbToMiddleProximalDist")
+            Log.d(TAG, "  Thumb to index proximal dist: $thumbToIndexProximalDist")
+            Log.d(TAG, "  Thumb crossing palm: $thumbCrossingPalm")
+            Log.d(TAG, "  Palm oriented correctly: $palmOriented")
+        }
 
         return confidence
     }
@@ -529,8 +670,18 @@ object ASLDetector {
         val middleToRing = distance(middleTip, ringTip)
         val ringToLittle = distance(ringTip, littleTip)
 
-        // Adjust thresholds as needed
-        return indexToMiddle < 0.04f && middleToRing < 0.04f && ringToLittle < 0.04f
+        // Increased thresholds
+        return indexToMiddle < 0.06f && middleToRing < 0.06f && ringToLittle < 0.06f
+    }
+
+    /**
+     * Check if a set of values are similar to each other (within maxDifference)
+     */
+    private fun areValuesSimilar(values: List<Float>, maxDifference: Float): Boolean {
+        if (values.isEmpty()) return true
+        val min = values.minOrNull() ?: 0f
+        val max = values.maxOrNull() ?: 0f
+        return (max - min) <= maxDifference
     }
 
     /**
@@ -560,7 +711,7 @@ object ASLDetector {
      * Calculate angle between two vectors in degrees
      */
     private fun angleBetweenVectors(v1: Vector3, v2: Vector3): Float {
-        val dot = dotProduct(v1, v2)
+        val dot = dotProduct(normalize(v1), normalize(v2))
         return acos(dot.coerceIn(-1f, 1f)) * (180f / Math.PI.toFloat())
     }
 

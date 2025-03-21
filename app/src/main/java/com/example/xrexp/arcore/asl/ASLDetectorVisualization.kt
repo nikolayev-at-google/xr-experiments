@@ -618,12 +618,29 @@ fun ASLDetectionScreen(
 
             // Show the selected hand debug info
             when (selectedTabIndex) {
+
                 0 -> {
                     // Left hand
                     leftHandDebugInfo?.let { debugInfo ->
                         ASLDetectorVisualization(
                             debugInfo = debugInfo,
                             isLeftHand = true
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        DetailedSignDebugView(
+                            debugInfo = debugInfo,
+                            isLeftHand = true,
+                            sign = ASLDetector.Sign.A
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        DetailedSignDebugView(
+                            debugInfo = debugInfo,
+                            isLeftHand = true,
+                            sign = ASLDetector.Sign.E
                         )
                     } ?: Text("No left hand tracking data available")
                 }
@@ -634,6 +651,22 @@ fun ASLDetectionScreen(
                         ASLDetectorVisualization(
                             debugInfo = debugInfo,
                             isLeftHand = false
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        DetailedSignDebugView(
+                            debugInfo = debugInfo,
+                            isLeftHand = false,
+                            sign = ASLDetector.Sign.A
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        DetailedSignDebugView(
+                            debugInfo = debugInfo,
+                            isLeftHand = false,
+                            sign = ASLDetector.Sign.E
                         )
                     } ?: Text("No right hand tracking data available")
                 }
