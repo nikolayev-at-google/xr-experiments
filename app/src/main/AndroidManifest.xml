@@ -153,6 +153,12 @@
                 android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED"/>
         </activity>
 
+        <activity android:name=".arcore.asl.ASLDetectorActivity"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+        </activity>
+
     </application>
 
 </manifest>

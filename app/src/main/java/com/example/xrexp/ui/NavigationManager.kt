@@ -12,6 +12,7 @@ import com.example.xrexp.Main3DAnimActivity
 import com.example.xrexp.MainActivity
 import com.example.xrexp.MainEnvironmentActivity
 import com.example.xrexp.MainVideoActivity
+import com.example.xrexp.arcore.asl.ASLDetectorActivity
 import com.example.xrexp.arcore.ExpArCoreActivity
 import com.example.xrexp.arcore.ExpHandsActivity
 import com.example.xrexp.audio.AudioActivity
@@ -25,6 +26,10 @@ object NavigationManager {
         ExpActivityInfo(
             activityClass = MainActivity::class.java,
             description = "The main entry point of the app"
+        ),
+        ExpActivityInfo(
+            activityClass = ASLDetectorActivity::class.java,
+            description = "American Sign Language detection. Activity to recognize ASL signs A, B, C, D, and E."
         ),
         ExpActivityInfo(
             activityClass = AudioActivity::class.java,
