@@ -39,7 +39,7 @@ class ASL2ViewModel : ViewModel() {
 
     // Jobs
     var leftHandCollector : Job? = null
-    var rightHandCollector : Job? = null
+//    var rightHandCollector : Job? = null
 
     /**
      * Start tracking hands for ASL detection
@@ -54,19 +54,19 @@ class ASL2ViewModel : ViewModel() {
             }
         }
 
-        rightHandCollector = viewModelScope.launch {
-            // Track right hand
-            Hand.right(arCoreSession)?.state?.collect { rightHandState ->
-                if (rightHandState.isActive) {
-                    processHandState(rightHandState, isLeftHand = false)
-                }
-            }
-        }
+//        rightHandCollector = viewModelScope.launch {
+//            // Track right hand
+//            Hand.right(arCoreSession)?.state?.collect { rightHandState ->
+//                if (rightHandState.isActive) {
+//                    processHandState(rightHandState, isLeftHand = false)
+//                }
+//            }
+//        }
     }
 
     fun stopTracking() {
         leftHandCollector?.cancel()
-        rightHandCollector?.cancel()
+//        rightHandCollector?.cancel()
     }
 
     fun updateParameters(parameters: DetectionParameters) {

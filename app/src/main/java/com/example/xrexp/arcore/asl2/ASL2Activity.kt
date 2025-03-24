@@ -12,7 +12,7 @@ import com.example.xrexp.arcore.common.SessionLifecycleHelper
 import com.example.xrexp.ui.theme.XRExpTheme
 
 
-class MainActivity : ComponentActivity() {
+class ASL2Activity : ComponentActivity() {
 
     private val viewModel: ASL2ViewModel by viewModels()
     private lateinit var session: Session

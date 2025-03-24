@@ -15,6 +15,7 @@ import com.example.xrexp.MainVideoActivity
 import com.example.xrexp.arcore.asl.ASLDetectorActivity
 import com.example.xrexp.arcore.ExpArCoreActivity
 import com.example.xrexp.arcore.ExpHandsActivity
+import com.example.xrexp.arcore.asl2.ASL2Activity
 import com.example.xrexp.audio.AudioActivity
 import com.example.xrexp.m3.M3MainActivity
 
@@ -23,6 +24,11 @@ object NavigationManager {
     private const val TAG = "NavigationManager"
 
     private val activityRegistry = listOf(
+        ExpActivityInfo(
+            activityClass = ASL2Activity::class.java,
+            description = "American Sign Language detection.",
+            isFullSpace = true
+        ),
         ExpActivityInfo(
             activityClass = MainActivity::class.java,
             description = "The main entry point of the app"

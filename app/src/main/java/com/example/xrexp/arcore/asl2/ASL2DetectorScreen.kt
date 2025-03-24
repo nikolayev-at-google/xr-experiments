@@ -39,12 +39,6 @@ fun ASL2DetectorScreen(viewModel: ASL2ViewModel) {
         // Current detection
         CurrentDetectionDisplay(detectedSign)
 
-        // Hand visualization
-        HandVisualization(
-            detectionResult?.handMetrics,
-            detectionResult?.primaryCandidate?.debugInfo
-        )
-
         // Confidence meters for candidates
         ConfidenceMeters(detectionResult?.alternativeCandidates ?: emptyList())
 
@@ -85,39 +79,6 @@ fun CurrentDetectionDisplay(sign: ASLSign) {
                 style = MaterialTheme.typography.headlineMedium,
                 color = if (sign == ASLSign.NONE) Color.Gray else Color.Blue
             )
-        }
-    }
-}
-
-@Suppress("unused")
-@Composable
-fun HandVisualization(
-    handMetrics: HandMetrics?,
-    debugInfo: Map<String, Any>?
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(300.dp)
-            .padding(bottom = 16.dp)
-    ) {
-        if (handMetrics == null) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("No hand detected")
-            }
-        } else {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("This would be a custom drawing canvas to visualize the hand\n" +
-                        "Would use Canvas composable to draw joints and connections\n" +
-                        "Project 3D data to 2D visualization with proper angle\n" +
-                        "Color-code based on extension/curl metrics and debug info")
-            }
         }
     }
 }
