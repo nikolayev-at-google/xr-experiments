@@ -101,8 +101,8 @@ object NavigationManager {
         if (info.isFullSpace) {
             Log.i(TAG, "Starting new activity(${info.activityClass.name}) in Full space")
             intent.flags = FLAG_ACTIVITY_NEW_TASK
-            var bundle = Bundle()
-            var startActivityBundle = session?.setFullSpaceMode(bundle) ?: bundle
+            val bundle = Bundle()
+            val startActivityBundle = session?.setFullSpaceMode(bundle) ?: bundle
             context.startActivity(intent, startActivityBundle)
         } else {
             Log.i(TAG, "Starting new activity(${info.activityClass.name}) in Home space")
