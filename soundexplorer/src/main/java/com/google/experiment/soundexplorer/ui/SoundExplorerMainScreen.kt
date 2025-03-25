@@ -14,6 +14,7 @@ import androidx.xr.compose.spatial.Subspace
 import com.google.experiment.soundexplorer.ui.theme.SoundExplorerTheme
 import com.google.experiment.soundexplorer.vm.SoundExplorerViewModel
 
+
 @Composable
 fun SoundExplorerMainScreen(
     viewModel: SoundExplorerViewModel = viewModel()

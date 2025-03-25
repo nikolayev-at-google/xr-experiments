@@ -8,7 +8,6 @@ import com.google.experiment.soundexplorer.ui.SoundExplorerMainScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 
-
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
