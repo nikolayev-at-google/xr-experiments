@@ -168,6 +168,15 @@
                 android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED"/>
         </activity>
 
+        <activity android:name=".ui.headlock.HeadLockedUiActivity"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:theme="@style/Theme.XRExp">
+            <property
+                android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+                android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED"/>
+        </activity>
+
     </application>
 
 </manifest>

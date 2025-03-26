@@ -37,8 +37,6 @@ xr-material3XR      = "1.0.0-alpha05"
 composeTesting      = "1.0.0-alpha03"
 runtimeTesting      = "1.0.0-alpha03"
 scenecoreTesting    = "1.0.0-alpha03"
-appcompat           = "1.7.0"
-material            = "1.12.0"
 
 [libraries]
 # jetbrains
@@ -59,12 +57,12 @@ androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", versi
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "composeUI" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 
 androidx-compose-material3-android = { group = "androidx.compose.material3", name = "material3-android", version.ref = "composeMaterial3" }
 
-androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "composeMaterialIconsCore" }
+androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "composeMaterialIconsCore" }
 androidx-concurrent-futures = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrentFuturesKtx" }
 androidx-adaptive = { module = "androidx.compose.material3.adaptive:adaptive", version.ref = "composeMaterial3Adaptive" }
 androidx-adaptive-navigation = { module = "androidx.compose.material3.adaptive:adaptive-navigation", version.ref = "composeMaterial3Adaptive" }
@@ -94,8 +92,6 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 
 [plugins]

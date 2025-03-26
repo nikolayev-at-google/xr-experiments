@@ -63,4 +63,22 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.material3.android)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+//    // Optional - Included automatically by material, only add when you need
+//    // the icons but not the material library (e.g. when using Material3 or a
+//    // custom design system based on Foundation)
+//    implementation("androidx.compose.material:material-icons-core")
+//    // Optional - Add full set of material icons
+//    implementation("androidx.compose.material:material-icons-extended")
+
+    // material icons
+    implementation(libs.androidx.compose.material.icons.core)
+
+    // Testing
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+
+    // Debug
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }

@@ -11,6 +11,7 @@ android {
     defaultConfig {
         applicationId = "com.example.xrexp"
         minSdk = 34
+        //noinspection OldTargetApi
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -57,11 +58,11 @@ dependencies {
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.concurrent.futures)
 
     // material icons
-    implementation(libs.androidx.material.icons.core)
+    implementation(libs.androidx.compose.material.icons.core)
 
     // material3 Adaptive (CAMAL) dependencies
     implementation(libs.androidx.adaptive)
@@ -100,6 +101,6 @@ dependencies {
     androidTestImplementation(composeBom)
     androidTestImplementation(libs.androidx.ui.test.junit4)
 
-    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

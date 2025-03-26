@@ -18,12 +18,18 @@ import com.example.xrexp.arcore.ExpHandsActivity
 import com.example.xrexp.arcore.asl2.ASL2Activity
 import com.example.xrexp.audio.AudioActivity
 import com.example.xrexp.m3.M3MainActivity
+import com.example.xrexp.ui.headlock.HeadLockedUiActivity
 
 object NavigationManager {
 
     private const val TAG = "NavigationManager"
 
     private val activityRegistry = listOf(
+        ExpActivityInfo(
+            activityClass = HeadLockedUiActivity::class.java,
+            description = "Test UI with head locked panel",
+            isFullSpace = true
+        ),
         ExpActivityInfo(
             activityClass = ASL2Activity::class.java,
             description = "American Sign Language detection.",
