@@ -117,8 +117,8 @@ class ExpHandsActivity : ComponentActivity() {
         lifecycleScope.launch {
             resourceAsync.await()
 
-            Hand.left(arCoreSession)?.state?.collect {
-                handStateTracking(it, true)
+            Hand.left(arCoreSession)?.state?.collect { handState ->
+                handStateTracking(handState, true)
             }
 
 //            Hand.right(arCoreSession)?.state?.collect {

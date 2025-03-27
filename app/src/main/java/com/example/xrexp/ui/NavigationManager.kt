@@ -12,10 +12,13 @@ import com.example.xrexp.Main3DAnimActivity
 import com.example.xrexp.MainActivity
 import com.example.xrexp.MainEnvironmentActivity
 import com.example.xrexp.MainVideoActivity
+import com.example.xrexp.arcore.asl.ASLDetectorActivity
 import com.example.xrexp.arcore.ExpArCoreActivity
 import com.example.xrexp.arcore.ExpHandsActivity
+import com.example.xrexp.arcore.asl2.ASL2Activity
 import com.example.xrexp.audio.AudioActivity
 import com.example.xrexp.m3.M3MainActivity
+import com.example.xrexp.ui.headlock.HeadLockedUiActivity
 
 object NavigationManager {
 
@@ -23,8 +26,22 @@ object NavigationManager {
 
     private val activityRegistry = listOf(
         ExpActivityInfo(
+            activityClass = HeadLockedUiActivity::class.java,
+            description = "Test UI with head locked panel",
+            isFullSpace = true
+        ),
+        ExpActivityInfo(
+            activityClass = ASL2Activity::class.java,
+            description = "American Sign Language detection.",
+            isFullSpace = true
+        ),
+        ExpActivityInfo(
             activityClass = MainActivity::class.java,
             description = "The main entry point of the app"
+        ),
+        ExpActivityInfo(
+            activityClass = ASLDetectorActivity::class.java,
+            description = "American Sign Language detection. Activity to recognize ASL signs A, B, C, D, and E."
         ),
         ExpActivityInfo(
             activityClass = AudioActivity::class.java,
@@ -90,8 +107,8 @@ object NavigationManager {
         if (info.isFullSpace) {
             Log.i(TAG, "Starting new activity(${info.activityClass.name}) in Full space")
             intent.flags = FLAG_ACTIVITY_NEW_TASK
-            var bundle = Bundle()
-            var startActivityBundle = session?.setFullSpaceMode(bundle) ?: bundle
+            val bundle = Bundle()
+            val startActivityBundle = session?.setFullSpaceMode(bundle) ?: bundle
             context.startActivity(intent, startActivityBundle)
         } else {
             Log.i(TAG, "Starting new activity(${info.activityClass.name}) in Home space")

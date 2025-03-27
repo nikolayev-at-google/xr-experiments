@@ -69,7 +69,7 @@ fun AmbisonicAudioPlayerPanel(
                 Icon(
                     painter = painterResource(R.drawable.play_circle_24px),
                     contentDescription = "Play",
-                    tint = if (viewModel.isAudioPlaying) Color.Gray else MaterialTheme.colorScheme.primary
+                    tint = if (viewModel.isPlaying) Color.Gray else MaterialTheme.colorScheme.primary
                 )
             }
 

@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "XR-Experiments"
 include(":app")
+include(":soundexplorer")

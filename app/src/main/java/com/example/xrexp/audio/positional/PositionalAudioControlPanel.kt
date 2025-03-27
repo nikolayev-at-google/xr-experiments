@@ -1,8 +1,11 @@
 package com.example.xrexp.audio.positional
 
+import android.os.Handler
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,15 +18,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,9 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.os.HandlerCompat.postDelayed
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.xr.compose.platform.LocalSession
@@ -41,10 +48,8 @@ import androidx.xr.compose.platform.LocalSpatialCapabilities
 import androidx.xr.compose.spatial.Subspace
 import androidx.xr.compose.subspace.SpatialColumn
 import androidx.xr.compose.subspace.Volume
-import androidx.xr.runtime.math.Pose
-import androidx.xr.runtime.math.Quaternion
-import androidx.xr.runtime.math.Vector3
 import androidx.xr.scenecore.GltfModelEntity
+import com.example.xrexp.ui.theme.LocalSpacing
 import com.example.xrexp.ui.theme.XRExpTheme
 
 
@@ -56,12 +61,16 @@ fun PositionalAudioControlPanel(
     viewModel: PositionalAudioControlViewModel = viewModel()
 ) {
     val uiState = viewModel.uiState.value
-    val session = LocalSession.current!!
+    val session = LocalSession.current
+    val context = LocalContext.current
+    val modelEntity = remember { mutableStateOf<GltfModelEntity?>(null) }
 
-    LaunchedEffect(Unit) {
-        Log.i(TAG, "PositionalAudioControlPanel  -  LaunchedEffect")
-        viewModel.loadModel(session)
-    }
+    if (session != null)
+        LaunchedEffect(Unit) {
+            Log.i(TAG, "PositionalAudioControlPanel  -  LaunchedEffect")
+            viewModel.loadModel(session)
+            viewModel.loadSounds(context)
+        }
 
     Column(
         modifier = modifier
@@ -72,6 +81,7 @@ fun PositionalAudioControlPanel(
         // Angle Slider
         PositionalAudioSliderWithTitle(
             title = "Angle",
+            value = uiState.angle,
             onValueChange = { viewModel.onAngleChanged(it) },
             valueRange = 0f..360f,
             enabled = uiState.slidersEnabled
@@ -80,6 +90,7 @@ fun PositionalAudioControlPanel(
         // Distance Slider
         PositionalAudioSliderWithTitle(
             title = "Distance",
+            value = uiState.distance,
             onValueChange = { viewModel.onDistanceChanged(it) },
             valueRange = 0f..10f,
             enabled = uiState.slidersEnabled
@@ -93,7 +104,11 @@ fun PositionalAudioControlPanel(
         ) {
             // Play Button
             Button(
-                onClick = { viewModel.onPlayClicked() },
+                onClick = {
+                    Handler().postDelayed({
+                        viewModel.onPlayClicked(session, modelEntity.value)
+                    }, 1000)
+                },
                 enabled = !uiState.isPlaying
             ) {
                 Icon(
@@ -123,6 +138,10 @@ fun PositionalAudioControlPanel(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                DropDownWidget()
+
+                Spacer(modifier = Modifier.padding(LocalSpacing.current.m))
+
                 Checkbox(
                     checked = uiState.loop,
                     onCheckedChange = { viewModel.onLoopChanged(it) }
@@ -136,80 +155,29 @@ fun PositionalAudioControlPanel(
     if (uiState.showDialog) {
         Subspace {
             SpatialColumn {
-                val context = LocalContext.current
                 val localSpatialCapabilities = LocalSpatialCapabilities.current
-                val distance = viewModel.distance.collectAsStateWithLifecycle()
                 val model = viewModel.gltfModel.collectAsStateWithLifecycle()
-                var modelEntity by remember { mutableStateOf<GltfModelEntity?>(null) }
-
-                Log.d(TAG, "-----------------: ${distance.value}")
-
+                val modelPose = viewModel.modelPose.collectAsStateWithLifecycle()
                 Volume { volumeEntity ->
                     // check for spatial capabilities
                     if (localSpatialCapabilities.isContent3dEnabled) {
-                        model.value?.let { model ->
-
-                            Log.d(TAG, "============================: ${distance.value}")
-
-                            GltfModelEntity.create(session, model)?.let {
-                                modelEntity = it
-                                volumeEntity.addChild(it)
-                            }
-                        }
+                       model.value?.let { model ->
+                           if (session != null) {
+                               GltfModelEntity.create(session, model).let {
+                                   modelEntity.value = it
+                                   volumeEntity.addChild(it)
+                               }
+                           }
+                       }
                     } else {
                         Toast.makeText(context, "3D content not enabled", Toast.LENGTH_LONG).show()
                     }
                 }
 
-                modelEntity?.let {
-
-                    Log.d(TAG, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>: ${distance.value}")
-
-                    // Transformations
-                    val translation = Vector3(0f, 0f, -distance.value)
-                    val orientation = Quaternion.fromEulerAngles(0f, -45f, 0f)
-                    val pose = Pose(translation, orientation)
-                    modelEntity?.setPose(pose)
-                    modelEntity?.setScale(0.5f)
+                modelEntity.value?.let {
+                    modelEntity.value?.setPose(modelPose.value)
+                    modelEntity.value?.setScale(0.5f)
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun PositionalEntityPanel(
-    viewModel: PositionalAudioControlViewModel = viewModel()
-) {
-
-    val uiState = viewModel.uiState.value
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Animation in Progress",
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Angle: ${uiState.angle.toInt()}°\nDistance: ${"%.1f".format(viewModel.distance.value)} units",
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { viewModel.onDismissDialog() }
-            ) {
-                Text("Close")
             }
         }
     }
@@ -218,13 +186,11 @@ fun PositionalEntityPanel(
 @Composable
 fun PositionalAudioSliderWithTitle(
     title: String,
+    value: Float,
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float>,
-    enabled: Boolean,
-    viewModel: PositionalAudioControlViewModel = viewModel()
+    enabled: Boolean
 ) {
-    val distance = viewModel.distance.collectAsStateWithLifecycle()
-
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -235,17 +201,72 @@ fun PositionalAudioSliderWithTitle(
                 style = MaterialTheme.typography.bodyLarge
             )
             Text(
-                text = if (title == "Angle") "${distance.value.toInt()}°" else "${"%.1f".format(distance.value)}",
+                text = if (title == "Angle") "${value.toInt()}°" else "%.1f".format(value),
                 style = MaterialTheme.typography.bodyMedium
             )
         }
         Slider(
-            value = distance.value,
+            value = value,
             onValueChange = onValueChange,
             valueRange = valueRange,
             enabled = enabled,
-//            steps = if (title == "Angle") 36 else 10
+            steps = if (title == "Angle") 36 else 10
         )
+    }
+}
+
+@Composable
+fun DropDownWidget(
+    viewModel: PositionalAudioControlViewModel = viewModel()
+) {
+    // Collect states from ViewModel
+    val items by viewModel.items.collectAsState()
+    val selectedItem by viewModel.selectedItem.collectAsState()
+    val isExpanded by viewModel.isDropdownExpanded.collectAsState()
+
+    // Dropdown menu
+    Box(
+        modifier = Modifier
+            .width(300.dp)
+            .height(220.dp)
+    ) {
+        OutlinedTextField(
+            value = selectedItem, // ?: "Select an sound",
+            onValueChange = { },
+            readOnly = true,
+            modifier = Modifier
+                .clickable { viewModel.onDropdownExpandedChange(!isExpanded) },
+            trailingIcon = {
+                IconButton(onClick = { viewModel.onDropdownExpandedChange(!isExpanded) }) {
+                    Text(text = if (isExpanded) "▲" else "▼")
+                }
+            }
+        )
+
+        DropdownMenu(
+            expanded = isExpanded,
+            onDismissRequest = { viewModel.onDropdownExpandedChange(false) }
+        ) {
+            items.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(text = item) },
+                    onClick = { viewModel.onItemSelected(item) }
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DropDownWidgetPreview() {
+    XRExpTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            DropDownWidget()
+        }
     }
 }
 
