@@ -8,22 +8,32 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.concurrent.futures.await
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.xr.arcore.Hand
+import androidx.xr.arcore.HandJointType
 import androidx.xr.runtime.SessionCreatePermissionsNotGranted
 import androidx.xr.runtime.SessionCreateSuccess
 import androidx.xr.runtime.SessionResumePermissionsNotGranted
 import androidx.xr.runtime.SessionResumeSuccess
-import com.google.experiment.soundexplorer.core.HandGestureDetector
+import androidx.xr.runtime.math.Pose
+import androidx.xr.runtime.math.Vector3
+import androidx.xr.scenecore.Entity
+import androidx.xr.scenecore.GltfModel
+import androidx.xr.scenecore.GltfModelEntity
+import androidx.xr.scenecore.InputEvent
+import androidx.xr.scenecore.InteractableComponent
 import androidx.xr.scenecore.Session as SceneCoreSession
 import androidx.xr.runtime.Session as ARCoreSession
 import com.google.experiment.soundexplorer.ui.SoundExplorerMainScreen
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Locale
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class HandMenuActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
@@ -34,7 +44,8 @@ class MainActivity : ComponentActivity() {
     // TODO: refactor
     private val scenecoreSession : SceneCoreSession by lazy { SceneCoreSession.create(this) }
     private lateinit var arCoreSession: ARCoreSession
-    private lateinit var handGestureDetector: HandGestureDetector
+
+    private lateinit var job : Job
 
 
     @SuppressLint("RestrictedApi")
@@ -46,22 +57,6 @@ class MainActivity : ComponentActivity() {
         Log.d(TAG, "onCreate")
         setContent {
             SoundExplorerMainScreen()
-        }
-
-        // Create gesture detector
-        handGestureDetector = HandGestureDetector(lifecycleScope) {
-            when (it.gesture) {
-                HandGestureDetector.HandGesture.OPEN_PALM -> {
-                    Log.d(TAG, "\n${it.isLeftHand.toString().capitalize(Locale.getDefault())} - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ")
-                }
-                HandGestureDetector.HandGesture.CLOSED_FIST -> {
-                    Log.d(TAG, "\n${it.isLeftHand.toString().capitalize(Locale.getDefault())}*************************************************************************************")
-                }
-                HandGestureDetector.HandGesture.OTHER -> {
-                    Log.d(TAG, "\n${it.isLeftHand.toString().capitalize(Locale.getDefault())}888888888888888888888888888888888888888888888888888888888888888888888888888888888888888")
-                }
-            }
-
         }
 
         when (val result = ARCoreSession.create(this)) {
@@ -109,15 +104,77 @@ class MainActivity : ComponentActivity() {
         arCoreSession.destroy()
     }
 
+    @SuppressLint("RestrictedApi")
     private fun startHandTracking(
         lifecycleOwner: LifecycleOwner,
         session: ARCoreSession
     ) {
-        handGestureDetector.startDetection(session)
+        job = lifecycleOwner.lifecycleScope.launch {
+
+            val almModel = GltfModel.create(scenecoreSession, "glb/02static.glb").await()
+            val palmEntity = GltfModelEntity.create(scenecoreSession, almModel).apply {
+                setScale(0.005f)
+                addComponent(InteractableComponent.create(scenecoreSession, mainExecutor) { event ->
+                    when (event.action) {
+                        InputEvent.ACTION_DOWN -> {
+                            Log.d("TAG", "InputEvent.ACTION_DOWN")
+                        }
+                        InputEvent.ACTION_UP -> {
+                            Log.d("TAG", "InputEvent.ACTION_UP")
+                        }
+                        InputEvent.ACTION_MOVE -> {
+                            Log.d("TAG", "InputEvent.ACTION_MOVE")
+                        }
+                        InputEvent.ACTION_CANCEL -> {
+                            Log.d("TAG", "InputEvent.ACTION_CANCEL")
+                        }
+                        InputEvent.ACTION_HOVER_MOVE -> {
+                            Log.d("TAG", "InputEvent.ACTION_HOVER_MOVE")
+                        }
+                        InputEvent.ACTION_HOVER_ENTER -> {
+                            Log.d("TAG", "InputEvent.ACTION_HOVER_ENTER")
+                            setScale(0.009f)
+                        }
+                        InputEvent.ACTION_HOVER_EXIT -> {
+                            Log.d("TAG", "InputEvent.ACTION_HOVER_EXIT")
+                            setScale(0.005f)
+                        }
+                        else -> {
+                            Log.d("TAG", "InputEvent.OTHER: ${event.action} event:[$event]")
+                        }
+                    }
+                })
+            }
+
+            handTracking(session ,scenecoreSession, palmEntity)
+        }
     }
 
     private fun stopHandTracking() {
-        handGestureDetector.stopDetection()
+        job.cancel()
+    }
+
+    @SuppressLint("RestrictedApi")
+    private suspend fun handTracking(
+        session: ARCoreSession,
+        scenecoreSession : SceneCoreSession,
+        palmEntity : Entity
+    ) {
+        Hand.left(session)?.state?.collect { leftHandState ->
+            val palmPose = leftHandState.handJoints[HandJointType.PALM] ?: return@collect
+
+            // the down direction points in the same direction as the palm
+            val angle = Vector3.angleBetween(palmPose.rotation * Vector3.Down, Vector3.Up)
+            palmEntity.setHidden(angle > Math.toRadians(40.0))
+
+            val transformedPose =
+                scenecoreSession.perceptionSpace.transformPoseTo(
+                    palmPose,
+                    scenecoreSession.activitySpace,
+                )
+            val newPosition = transformedPose.translation + transformedPose.down*0.05f
+            palmEntity.setPose(Pose(newPosition, transformedPose.rotation))
+        }
     }
 
     private fun registerRequestPermissionLauncher(activity: ComponentActivity) {

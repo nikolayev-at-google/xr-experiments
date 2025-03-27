@@ -44,6 +44,10 @@ android {
 
 dependencies {
 
+    // Futures
+    implementation(libs.androidx.concurrent.futures)
+    implementation(libs.kotlinx.coroutines.guava)
+
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
@@ -64,12 +68,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.material3.android)
     implementation(libs.androidx.compose.ui.tooling.preview)
-//    // Optional - Included automatically by material, only add when you need
-//    // the icons but not the material library (e.g. when using Material3 or a
-//    // custom design system based on Foundation)
-//    implementation("androidx.compose.material:material-icons-core")
-//    // Optional - Add full set of material icons
-//    implementation("androidx.compose.material:material-icons-extended")
 
     // material icons
     implementation(libs.androidx.compose.material.icons.core)
