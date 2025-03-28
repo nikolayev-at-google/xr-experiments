@@ -38,7 +38,7 @@ import androidx.xr.compose.subspace.layout.width
 
 
 @Composable
-fun SoundExplorerMainScreen() {
+fun SoundExplorerMainScreen2() {
     SoundExplorerTheme {
         MainPanel()
     }
@@ -62,7 +62,7 @@ fun MainPanel() {
 @Preview
 @Composable
 fun MainPanelPreview() {
-    SoundExplorerMainScreen()
+    SoundExplorerMainScreen2()
 }
 
 

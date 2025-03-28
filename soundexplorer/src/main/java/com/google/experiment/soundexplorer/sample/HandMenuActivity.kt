@@ -1,4 +1,4 @@
-package com.google.experiment.soundexplorer
+package com.google.experiment.soundexplorer.sample
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -27,12 +27,11 @@ import androidx.xr.scenecore.InteractableComponent
 import androidx.xr.scenecore.Session as SceneCoreSession
 import androidx.xr.runtime.Session as ARCoreSession
 import com.google.experiment.soundexplorer.ui.SoundExplorerMainScreen
-import dagger.hilt.android.AndroidEntryPoint
+import com.google.experiment.soundexplorer.ui.SoundExplorerMainScreen2
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 
-@AndroidEntryPoint
 class HandMenuActivity : ComponentActivity() {
 
     companion object {
@@ -56,7 +55,7 @@ class HandMenuActivity : ComponentActivity() {
 
         Log.d(TAG, "onCreate")
         setContent {
-            SoundExplorerMainScreen()
+            SoundExplorerMainScreen2()
         }
 
         when (val result = ARCoreSession.create(this)) {

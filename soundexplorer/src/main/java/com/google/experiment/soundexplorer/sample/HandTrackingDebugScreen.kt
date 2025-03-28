@@ -1,5 +1,6 @@
-package com.google.experiment.soundexplorer
+package com.google.experiment.soundexplorer.sample
 
+import android.graphics.Paint
 import android.util.Log
 import androidx.concurrent.futures.await
 import androidx.compose.foundation.Canvas
@@ -677,7 +678,7 @@ fun HandVisualization(handData: HandTrackingViewModel.HandData) {
                     fingerName,
                     fingerX,
                     fingerY - 10,
-                    android.graphics.Paint().apply {
+                    Paint().apply {
                         color = android.graphics.Color.WHITE
                         textSize = 30f
                     }

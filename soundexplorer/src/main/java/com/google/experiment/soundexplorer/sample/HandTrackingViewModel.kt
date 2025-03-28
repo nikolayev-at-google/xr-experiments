@@ -1,4 +1,4 @@
-package com.google.experiment.soundexplorer
+package com.google.experiment.soundexplorer.sample
 
 
 import android.annotation.SuppressLint
