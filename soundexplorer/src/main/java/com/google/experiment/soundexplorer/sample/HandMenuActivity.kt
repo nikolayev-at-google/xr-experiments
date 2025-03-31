@@ -26,8 +26,6 @@ import androidx.xr.scenecore.InputEvent
 import androidx.xr.scenecore.InteractableComponent
 import androidx.xr.scenecore.Session as SceneCoreSession
 import androidx.xr.runtime.Session as ARCoreSession
-import com.google.experiment.soundexplorer.ui.SoundExplorerMainScreen
-import com.google.experiment.soundexplorer.ui.SoundExplorerMainScreen2
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 

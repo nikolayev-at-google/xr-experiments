@@ -1,6 +1,4 @@
-@file:Suppress("SpellCheckingInspection")
-
-package com.google.experiment.soundexplorer
+package com.google.experiment.soundexplorer.sample
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -9,19 +7,15 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.xr.runtime.SessionCreatePermissionsNotGranted
 import androidx.xr.runtime.SessionCreateSuccess
 import androidx.xr.runtime.SessionResumePermissionsNotGranted
 import androidx.xr.runtime.SessionResumeSuccess
-import androidx.xr.scenecore.Session as SceneCoreSession
-import androidx.xr.runtime.Session as ARCoreSession
-import com.google.experiment.soundexplorer.ui.SoundExplorerMainScreen
-import com.google.experiment.soundexplorer.vm.SoundExplorerViewModel
-import kotlin.getValue
+import androidx.xr.scenecore.Session
 import com.google.experiment.soundexplorer.core.GlbModelRepository
-
+import com.google.experiment.soundexplorer.sample.SoundExplorerViewModel
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -29,7 +23,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private val requestPermissionLauncher: ActivityResultLauncher<Array<String>> =
-        registerForActivityResult(RequestMultiplePermissions()) { permissions ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             val allPermissionsGranted = permissions.all { it.value }
             if (!allPermissionsGranted) {
                 Log.e(TAG, "Required permissions were not granted.")
@@ -42,11 +36,11 @@ class MainActivity : ComponentActivity() {
         }
 
     // Lazy init for SceneCoreSession remains
-    private val scenecoreSession: SceneCoreSession by lazy {
+    private val scenecoreSession: Session by lazy {
         Log.d(TAG, "Creating SceneCoreSession (lazy init).")
-        SceneCoreSession.create(this)
+        Session.Companion.create(this)
     }
-    private lateinit var arCoreSession: ARCoreSession
+    private lateinit var arCoreSession: androidx.xr.runtime.Session
 
     // Get ViewModel via delegate (Hilt handles injection if @AndroidEntryPoint and @HiltViewModel used)
     private val viewModel: SoundExplorerViewModel by viewModels()
@@ -68,7 +62,7 @@ class MainActivity : ComponentActivity() {
 
 
         // Attempt to create ARCore session
-        when (val result = ARCoreSession.create(this)) {
+        when (val result = androidx.xr.runtime.Session.Companion.create(this)) {
             is SessionCreateSuccess -> {
                 arCoreSession = result.session
                 Log.i(TAG, "ARCoreSession created successfully.")

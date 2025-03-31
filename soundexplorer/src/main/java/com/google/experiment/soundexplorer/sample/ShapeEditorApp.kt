@@ -1,4 +1,4 @@
-package com.google.experiment.soundexplorer.ui
+package com.google.experiment.soundexplorer.sample
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -117,7 +118,6 @@ fun ShapeEditorApp() {
                     MenuOption(
                         icon = Icons.Default.Edit,
                         text = "Edit Shapes",
-                        description = "Edit Mode",
                         onClick = { showMenu = false }
                     )
 
@@ -127,7 +127,6 @@ fun ShapeEditorApp() {
                     MenuOption(
                         icon = Icons.Default.Delete,
                         text = "Delete All",
-                        description = "Delete all shapes",
                         onClick = { showMenu = false }
                     )
 
@@ -137,7 +136,6 @@ fun ShapeEditorApp() {
                     MenuOption(
                         icon = Icons.Default.Close,
                         text = "Close App",
-                        description = "Exit experience",
                         onClick = { showMenu = false }
                     )
                 }
@@ -148,9 +146,8 @@ fun ShapeEditorApp() {
 
 @Composable
 fun MenuOption(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     text: String,
-    description: String,
     onClick: () -> Unit
 ) {
     Row(
@@ -176,13 +173,6 @@ fun MenuOption(
             color = Color.Black
         )
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        Text(
-            text = description,
-            fontSize = 14.sp,
-            color = Color(0xFFB89D34)
-        )
     }
 }
 

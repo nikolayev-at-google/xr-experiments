@@ -1,8 +1,7 @@
-package com.google.experiment.soundexplorer.vm
+package com.google.experiment.soundexplorer.sample
 
 import androidx.xr.scenecore.Model
 import com.google.experiment.soundexplorer.core.GlbModel
-
 
 sealed class AllModelsLoadingState {
     object NotStarted : AllModelsLoadingState() // Initial state before triggering load

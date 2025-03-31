@@ -1,10 +1,10 @@
-package com.google.experiment.soundexplorer.ui
+package com.google.experiment.soundexplorer.sample
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.xr.scenecore.Model
-import com.google.experiment.soundexplorer.vm.SoundExplorerViewModel
+import com.google.experiment.soundexplorer.sample.SoundExplorerViewModel
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -13,14 +13,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.experiment.soundexplorer.core.GlbModel
-import com.google.experiment.soundexplorer.vm.AllModelsLoadingState
+import com.google.experiment.soundexplorer.sample.AllModelsLoadingState
 
 // --- Composable UI (SoundExplorerMainScreen, MainSceneContent) ---
 // No changes needed here, they still observe the ViewModel's state.
