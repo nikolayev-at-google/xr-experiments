@@ -105,7 +105,7 @@ class ExpHandsActivity : ComponentActivity() {
         lifecycleScope.launch {
             val gltfModel = GltfModel.create(sceneCoreSession, GLB_FILE_NAME).await()
             // check for spatial capabilities
-            if (SpatialCapabilities.getOrCreate(sceneCoreSession).isContent3dEnabled){
+            if (SpatialCapabilities.getOrCreate(sceneCoreSession).isContent3dEnabled) {
                 // create the gltf entity using the gltf file from the previous snippet
                 val gltfEntity = GltfModelEntity.create(sceneCoreSession, gltfModel)
                 gltfEntity.setParent(sceneCoreSession.activitySpace)
