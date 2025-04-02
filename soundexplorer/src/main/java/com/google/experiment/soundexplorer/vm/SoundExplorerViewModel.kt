@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class SoundExplorerViewModel : ViewModel() {
 
-    private val _slidersValues = MutableStateFlow<Vector3>(Vector3.Zero + Vector3(-0.2f, -0.4f, 0f))
+    private val _slidersValues = MutableStateFlow<Vector3>(Vector3.Zero + Vector3(-0.2f, 0.4f, 0f))
     val slidersValues: StateFlow<Vector3> = _slidersValues.asStateFlow()
 
     private val _addShapeMenuOpen = MutableStateFlow<Boolean>(false)

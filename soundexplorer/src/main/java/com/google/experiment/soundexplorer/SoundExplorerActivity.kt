@@ -26,12 +26,17 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import androidx.xr.compose.spatial.Subspace
 import androidx.xr.runtime.math.Pose
 import androidx.xr.runtime.math.Vector3
+import androidx.xr.scenecore.AnchorEntity
+import androidx.xr.scenecore.ContentlessEntity
 import androidx.xr.scenecore.Dimensions
+import androidx.xr.scenecore.Entity
 import androidx.xr.scenecore.GltfModel
 import androidx.xr.scenecore.GltfModelEntity
 import androidx.xr.scenecore.InputEvent
 import androidx.xr.scenecore.InteractableComponent
 import androidx.xr.scenecore.PanelEntity
+import androidx.xr.scenecore.PlaneSemantic
+import androidx.xr.scenecore.PlaneType
 import androidx.xr.scenecore.Session
 import com.google.experiment.soundexplorer.ui.ActionScreen
 import com.google.experiment.soundexplorer.vm.SoundExplorerViewModel
@@ -85,250 +90,326 @@ class SoundExplorerActivity : ComponentActivity() {
             PanelEntity.create(
                 session = session,
                 view = headLockedPanelView,
-                surfaceDimensionsPx = Dimensions(1500f, 1500f),
+                surfaceDimensionsPx = Dimensions(1500f, 500f),
                 dimensions = Dimensions(2f, 7f),
                 name = "headLockedPanel",
                 pose = newUserForwardPose
             )
         headLockedPanel.setParent(session.activitySpace)
 
+        val contentlessEntity = ContentlessEntity.create(session, "")
+        contentlessEntity.setParent(headLockedPanel)
+
 
         lifecycleScope.launch {
 
             // region static01
-            val static01 = GltfModel.create(sceneCoreSession, "glb2/01_static.glb").await()
-            // create the gltf entity using the gltf file from the previous snippet
-            val static01Entity = GltfModelEntity.create(sceneCoreSession, static01)
-            static01Entity.setParent(headLockedPanel)
-            static01Entity.setPose(Pose(
-                translation = Vector3.Left * 0.1f,
-                rotation = static01Entity.getPose().rotation
-            ))
-            // Setting an Interactable Component
-            val interactable = InteractableComponent.create(session, mainExecutor) { ie ->
-                when (ie.action) {
-                    InputEvent.ACTION_HOVER_ENTER -> {
-                        static01Entity.setScale(1.3f)
-                    }
-                    InputEvent.ACTION_HOVER_EXIT -> {
-                        static01Entity.setScale(1f)
-                    }
-                    InputEvent.ACTION_DOWN -> {
+            createGridItem(
+                session = sceneCoreSession,
+                parent = contentlessEntity,
+                inMenuGlbFileName = "glb2/01_static.glb",
+                onSceneGlbFileName = "glb2/01_animated.glb",
+                translationInGrid = Vector3.Left * 0.1f,
+                inMenuOnLoaded = {},
+                inMenuOnHoverEnter = {
+                    it.setScale(1.3f)
+                    Log.d(TAG, "inMenuOnHoverEnter: $it")
+                },
+                inMenuOnHoverExit = {
+                    it.setScale(1f)
+                    Log.d(TAG, "inMenuOnHoverExit: $it")
+                },
+                inMenuOnClick = {
+                    it.setHidden(true)
+                    Log.d(TAG, "inMenuOnClick: $it")
+                },
+                onSceneOnLoaded = { onSceneModelEntity ->
 
-                        launch {
-                            // region static01
-                            val static01Anim = GltfModel.create(sceneCoreSession, "glb2/01_animated.glb").await()
-                            // create the gltf entity using the gltf file from the previous snippet
-                            val static01AnimEntity = GltfModelEntity.create(sceneCoreSession, static01Anim)
-                            static01Entity.setParent(session.activitySpace)
-                            val transformedPose =
-                                sceneCoreSession.activitySpace.transformPoseTo(
-                                    static01Entity.getPose(),
-                                    sceneCoreSession.activitySpace,
-                                )
-                            val newPosition = transformedPose.translation + transformedPose.backward
-                            static01AnimEntity.setPose(Pose(
-                                translation = newPosition,
-                                rotation = static01Entity.getPose().rotation
-                            ))
-                            // Setting an Interactable Component
-                            val interactable01Anim = InteractableComponent.create(session, mainExecutor) { ie ->
-                                when (ie.action) {
-                                    InputEvent.ACTION_DOWN -> {
-                                        static01AnimEntity.startAnimation(loop = false)
-                                    }
-                                }
-                            }
-                            static01AnimEntity.addComponent(interactable01Anim)
-                        }
-
-                        static01Entity.setHidden(true)
-                    }
+                    Log.d(TAG, "onSceneOnLoaded: ${onSceneModelEntity.getPose()}")
+                },
+                onSceneOnHoverEnter = {},
+                onSceneOnHoverExit = {},
+                onSceneOnClick = {
+                    it.startAnimation(loop = false)
                 }
-            }
-            static01Entity.addComponent(interactable)
+            )
             // endregion
 
 
             // region static02
-            val static02 = GltfModel.create(sceneCoreSession, "glb2/02_static.glb").await()
-            // create the gltf entity using the gltf file from the previous snippet
-            val static02Entity = GltfModelEntity.create(sceneCoreSession, static02)
-
-            static02Entity.setParent(headLockedPanel)
-            static02Entity.setPose(Pose(
-                translation = Vector3.Right * 0.1f,
-                rotation = static02Entity.getPose().rotation
-            ))
-            // Setting an Interactable Component
-            val interactable02 = InteractableComponent.create(session, mainExecutor) { ie ->
-                when (ie.action) {
-                    InputEvent.ACTION_HOVER_ENTER -> {
-                        static02Entity.setScale(1.3f)
-                    }
-                    InputEvent.ACTION_HOVER_EXIT -> {
-                        static02Entity.setScale(1f)
-                    }
+            createGridItem(
+                session = sceneCoreSession,
+                parent = contentlessEntity,
+                inMenuGlbFileName = "glb2/02_static.glb",
+                onSceneGlbFileName = "glb2/02_static.glb",
+                translationInGrid = Vector3.Right * 0.1f,
+                inMenuOnLoaded = {},
+                inMenuOnHoverEnter = {
+                    it.setScale(1.3f)
+                },
+                inMenuOnHoverExit = {
+                    it.setScale(1f)
+                },
+                inMenuOnClick = {
+                    it.setHidden(true)
+                },
+                onSceneOnLoaded = {},
+                onSceneOnHoverEnter = {},
+                onSceneOnHoverExit = {},
+                onSceneOnClick = {
+                    it.startAnimation(loop = false)
                 }
-            }
-            static02Entity.addComponent(interactable02)
+            )
             // endregion
 
             // region static05
-            val static05 = GltfModel.create(sceneCoreSession, "glb2/05_static.glb").await()
-            // create the gltf entity using the gltf file from the previous snippet
-            val static05Entity = GltfModelEntity.create(sceneCoreSession, static05)
-
-            static05Entity.setParent(headLockedPanel)
-            static05Entity.setPose(Pose(
-                translation = Vector3.Right * 0.3f,
-                rotation = static05Entity.getPose().rotation
-            ))
-            // Setting an Interactable Component
-            val interactable05 = InteractableComponent.create(session, mainExecutor) { ie ->
-                when (ie.action) {
-                    InputEvent.ACTION_HOVER_ENTER -> {
-                        static05Entity.setScale(1.3f)
-                    }
-                    InputEvent.ACTION_HOVER_EXIT -> {
-                        static05Entity.setScale(1f)
-                    }
+            createGridItem(
+                session = sceneCoreSession,
+                parent = contentlessEntity,
+                inMenuGlbFileName = "glb2/05_static.glb",
+                onSceneGlbFileName = "glb2/05_static.glb",
+                translationInGrid = Vector3.Right * 0.3f,
+                inMenuOnLoaded = {},
+                inMenuOnHoverEnter = {
+                    it.setScale(1.3f)
+                },
+                inMenuOnHoverExit = {
+                    it.setScale(1f)
+                },
+                inMenuOnClick = {
+                    it.setHidden(true)
+                },
+                onSceneOnLoaded = {},
+                onSceneOnHoverEnter = {},
+                onSceneOnHoverExit = {},
+                onSceneOnClick = {
+                    it.startAnimation(loop = false)
                 }
-            }
-            static05Entity.addComponent(interactable05)
+            )
             // endregion
 
             // region static08
-            val static08 = GltfModel.create(sceneCoreSession, "glb2/08_static.glb").await()
-            // create the gltf entity using the gltf file from the previous snippet
-            val static08Entity = GltfModelEntity.create(sceneCoreSession, static08)
-
-            static08Entity.setParent(headLockedPanel)
-            static08Entity.setPose(Pose(
-                translation = Vector3.Left * 0.1f + Vector3.Down * 0.1f,
-                rotation = static08Entity.getPose().rotation
-            ))
-            // Setting an Interactable Component
-            val interactable08 = InteractableComponent.create(session, mainExecutor) { ie ->
-                when (ie.action) {
-                    InputEvent.ACTION_HOVER_ENTER -> {
-                        static08Entity.setScale(1.3f)
-                    }
-                    InputEvent.ACTION_HOVER_EXIT -> {
-                        static08Entity.setScale(1f)
-                    }
+            createGridItem(
+                session = sceneCoreSession,
+                parent = contentlessEntity,
+                inMenuGlbFileName = "glb2/08_static.glb",
+                onSceneGlbFileName = "glb2/08_static.glb",
+                translationInGrid = Vector3.Left * 0.1f + Vector3.Down * 0.1f,
+                inMenuOnLoaded = {},
+                inMenuOnHoverEnter = {
+                    it.setScale(1.3f)
+                },
+                inMenuOnHoverExit = {
+                    it.setScale(1f)
+                },
+                inMenuOnClick = {
+                    it.setHidden(true)
+                },
+                onSceneOnLoaded = {},
+                onSceneOnHoverEnter = {},
+                onSceneOnHoverExit = {},
+                onSceneOnClick = {
+                    it.startAnimation(loop = false)
                 }
-            }
-            static08Entity.addComponent(interactable08)
+            )
             // endregion
 
 
             // region static10
-            val static10 = GltfModel.create(sceneCoreSession, "glb2/10_static.glb").await()
-            // create the gltf entity using the gltf file from the previous snippet
-            val static10Entity = GltfModelEntity.create(sceneCoreSession, static10)
-
-            static10Entity.setParent(headLockedPanel)
-            static10Entity.setPose(Pose(
-                translation = Vector3.Right * 0.1f + Vector3.Down * 0.1f,
-                rotation = static10Entity.getPose().rotation
-            ))
-            // Setting an Interactable Component
-            val interactable10 = InteractableComponent.create(session, mainExecutor) { ie ->
-                when (ie.action) {
-                    InputEvent.ACTION_HOVER_ENTER -> {
-                        static10Entity.setScale(1.3f)
-                    }
-                    InputEvent.ACTION_HOVER_EXIT -> {
-                        static10Entity.setScale(1f)
-                    }
+            createGridItem(
+                session = sceneCoreSession,
+                parent = contentlessEntity,
+                inMenuGlbFileName = "glb2/10_static.glb",
+                onSceneGlbFileName = "glb2/10_static.glb",
+                translationInGrid = Vector3.Right * 0.1f + Vector3.Down * 0.1f,
+                inMenuOnLoaded = {},
+                inMenuOnHoverEnter = {
+                    it.setScale(1.3f)
+                },
+                inMenuOnHoverExit = {
+                    it.setScale(1f)
+                },
+                inMenuOnClick = {
+                    it.setHidden(true)
+                },
+                onSceneOnLoaded = {},
+                onSceneOnHoverEnter = {},
+                onSceneOnHoverExit = {},
+                onSceneOnClick = {
+                    it.startAnimation(loop = false)
                 }
-            }
-            static10Entity.addComponent(interactable10)
+            )
             // endregion
 
             // region static11
-            val static11 = GltfModel.create(sceneCoreSession, "glb2/11_static.glb").await()
-            // create the gltf entity using the gltf file from the previous snippet
-            val static11Entity = GltfModelEntity.create(sceneCoreSession, static11)
-
-            static11Entity.setParent(headLockedPanel)
-            static11Entity.setPose(Pose(
-                translation = Vector3.Right * 0.3f + Vector3.Down * 0.1f,
-                rotation = static11Entity.getPose().rotation
-            ))
-            // Setting an Interactable Component
-            val interactable11 = InteractableComponent.create(session, mainExecutor) { ie ->
-                when (ie.action) {
-                    InputEvent.ACTION_HOVER_ENTER -> {
-                        static11Entity.setScale(1.3f)
-                    }
-                    InputEvent.ACTION_HOVER_EXIT -> {
-                        static11Entity.setScale(1f)
-                    }
+            createGridItem(
+                session = sceneCoreSession,
+                parent = contentlessEntity,
+                inMenuGlbFileName = "glb2/11_static.glb",
+                onSceneGlbFileName = "glb2/11_static.glb",
+                translationInGrid = Vector3.Right * 0.3f + Vector3.Down * 0.1f,
+                inMenuOnLoaded = {},
+                inMenuOnHoverEnter = {
+                    it.setScale(1.3f)
+                },
+                inMenuOnHoverExit = {
+                    it.setScale(1f)
+                },
+                inMenuOnClick = {
+                    it.setHidden(true)
+                },
+                onSceneOnLoaded = {},
+                onSceneOnHoverEnter = {},
+                onSceneOnHoverExit = {},
+                onSceneOnClick = {
+                    it.startAnimation(loop = false)
                 }
-            }
-            static11Entity.addComponent(interactable11)
+            )
             // endregion
 
             // region static16
-            val static16 = GltfModel.create(sceneCoreSession, "glb2/16_static.glb").await()
-            // create the gltf entity using the gltf file from the previous snippet
-            val static16Entity = GltfModelEntity.create(sceneCoreSession, static16)
-
-            static16Entity.setParent(headLockedPanel)
-            static16Entity.setPose(Pose(
-                translation = Vector3.Left * 0.1f + Vector3.Down * 0.2f,
-                rotation = static16Entity.getPose().rotation
-            ))
-            // Setting an Interactable Component
-            val interactable16 = InteractableComponent.create(session, mainExecutor) { ie ->
-                when (ie.action) {
-                    InputEvent.ACTION_HOVER_ENTER -> {
-                        static16Entity.setScale(1.3f)
-                    }
-                    InputEvent.ACTION_HOVER_EXIT -> {
-                        static16Entity.setScale(1f)
-                    }
+            createGridItem(
+                session = sceneCoreSession,
+                parent = contentlessEntity,
+                inMenuGlbFileName = "glb2/16_static.glb",
+                onSceneGlbFileName = "glb2/16_static.glb",
+                translationInGrid = Vector3.Left * 0.1f + Vector3.Down * 0.2f,
+                inMenuOnLoaded = {},
+                inMenuOnHoverEnter = {
+                    it.setScale(1.3f)
+                },
+                inMenuOnHoverExit = {
+                    it.setScale(1f)
+                },
+                inMenuOnClick = {
+                    it.setHidden(true)
+                },
+                onSceneOnLoaded = {},
+                onSceneOnHoverEnter = {},
+                onSceneOnHoverExit = {},
+                onSceneOnClick = {
+                    it.startAnimation(loop = false)
                 }
-            }
-            static16Entity.addComponent(interactable16)
+            )
             // endregion
 
             // region static18
-            val static18 = GltfModel.create(sceneCoreSession, "glb2/18_static.glb").await()
-            // create the gltf entity using the gltf file from the previous snippet
-            val static18Entity = GltfModelEntity.create(sceneCoreSession, static18)
-
-            static18Entity.setParent(headLockedPanel)
-            static18Entity.setPose(Pose(
-                translation = Vector3.Right * 0.1f + Vector3.Down * 0.2f,
-                rotation = static18Entity.getPose().rotation
-            ))
-            // Setting an Interactable Component
-            val interactable18 = InteractableComponent.create(session, mainExecutor) { ie ->
-                when (ie.action) {
-                    InputEvent.ACTION_HOVER_ENTER -> {
-                        static18Entity.setScale(1.3f)
-                    }
-                    InputEvent.ACTION_HOVER_EXIT -> {
-                        static18Entity.setScale(1f)
-                    }
+            createGridItem(
+                session = sceneCoreSession,
+                parent = contentlessEntity,
+                inMenuGlbFileName = "glb2/18_static.glb",
+                onSceneGlbFileName = "glb2/18_static.glb",
+                translationInGrid = Vector3.Right * 0.1f + Vector3.Down * 0.2f,
+                inMenuOnLoaded = {},
+                inMenuOnHoverEnter = {
+                    it.setScale(1.3f)
+                },
+                inMenuOnHoverExit = {
+                    it.setScale(1f)
+                },
+                inMenuOnClick = {
+                    it.setHidden(true)
+                },
+                onSceneOnLoaded = {},
+                onSceneOnHoverEnter = {},
+                onSceneOnHoverExit = {},
+                onSceneOnClick = {
+                    it.startAnimation(loop = false)
                 }
-            }
-            static18Entity.addComponent(interactable18)
+            )
             // endregion
 
             viewModel.addShapeMenuOpen.collect { isVisible ->
-                static01Entity.setHidden(!isVisible)
-                static02Entity.setHidden(!isVisible)
-                static05Entity.setHidden(!isVisible)
-                static08Entity.setHidden(!isVisible)
-                static10Entity.setHidden(!isVisible)
-                static11Entity.setHidden(!isVisible)
-                static16Entity.setHidden(!isVisible)
-                static18Entity.setHidden(!isVisible)
+                contentlessEntity.setHidden(!isVisible)
             }
+        }
+    }
+
+    private fun createGridItem(
+        session : Session,
+        parent : Entity,
+        inMenuGlbFileName : String,
+        onSceneGlbFileName : String,
+        translationInGrid : Vector3,
+        inMenuOnLoaded : (gltfModelEntity : GltfModelEntity) -> Unit,
+        inMenuOnHoverEnter : (gltfModelEntity : GltfModelEntity) -> Unit,
+        inMenuOnHoverExit : (gltfModelEntity : GltfModelEntity) -> Unit,
+        inMenuOnClick : (gltfModelEntity : GltfModelEntity) -> Unit,
+        onSceneOnLoaded : (gltfModelEntity : GltfModelEntity) -> Unit,
+        onSceneOnHoverEnter : (gltfModelEntity : GltfModelEntity) -> Unit,
+        onSceneOnHoverExit : (gltfModelEntity : GltfModelEntity) -> Unit,
+        onSceneOnClick : (gltfModelEntity : GltfModelEntity) -> Unit
+    ) {
+        lifecycleScope.launch {
+            val inMenuModel = GltfModel.create(session, inMenuGlbFileName).await()
+            val inMenuModelEntity = GltfModelEntity.create(session, inMenuModel)
+            inMenuModelEntity.setParent(parent)
+            inMenuModelEntity.setPose(
+                Pose(
+                    translation = translationInGrid,
+                    rotation = inMenuModelEntity.getPose().rotation
+                )
+            )
+            inMenuOnLoaded(inMenuModelEntity)
+            // Setting an Interactable Component
+            val interactable = InteractableComponent.create(session, mainExecutor) { ie ->
+                when (ie.action) {
+                    InputEvent.ACTION_HOVER_ENTER -> {
+                        inMenuOnHoverEnter(inMenuModelEntity)
+                    }
+                    InputEvent.ACTION_HOVER_EXIT -> {
+                        inMenuOnHoverExit(inMenuModelEntity)
+                    }
+                    InputEvent.ACTION_DOWN -> {
+                        inMenuOnClick(inMenuModelEntity)
+                        lifecycleScope.launch {
+
+//                            val anchor =
+//                                AnchorEntity.create(
+//                                    session = session,
+//                                    bounds = Dimensions(1f, 1f),
+//                                    PlaneType.ANY,
+//                                    PlaneSemantic.ANY
+//                                )
+
+                            val onSceneModel = GltfModel.create(session, onSceneGlbFileName).await()
+                            val onSceneModelEntity = GltfModelEntity.create(session, onSceneModel)
+//                            val transformedPose = session.activitySpace.transformPoseTo(
+//                                    onSceneModelEntity.getPose(),
+//                                    session.activitySpace,
+//                                )
+//                            val newPosition = transformedPose.translation + transformedPose.backward
+//                            onSceneModelEntity.setPose(Pose(
+//                                translation = newPosition,
+//                                rotation = inMenuModelEntity.getPose().rotation
+//                            ))
+                            onSceneModelEntity.setPose(Pose.Identity.translate(Vector3.Up))
+//                            onSceneModelEntity.setParent(session.activitySpace)
+
+//                            anchor.addChild(onSceneModelEntity)
+
+                            onSceneOnLoaded(onSceneModelEntity)
+                            // Setting an Interactable Component
+                            onSceneModelEntity.addComponent(
+                                InteractableComponent.create(session, mainExecutor) { ie ->
+                                    when (ie.action) {
+                                        InputEvent.ACTION_DOWN -> {
+                                            onSceneOnClick(onSceneModelEntity)
+                                        }
+                                        InputEvent.ACTION_HOVER_ENTER -> {
+                                            onSceneOnHoverEnter(onSceneModelEntity)
+                                        }
+                                        InputEvent.ACTION_HOVER_EXIT -> {
+                                            onSceneOnHoverExit(onSceneModelEntity)
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            inMenuModelEntity.addComponent(interactable)
         }
     }
 
