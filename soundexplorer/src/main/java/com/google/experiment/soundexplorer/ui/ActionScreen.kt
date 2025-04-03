@@ -32,7 +32,10 @@ import com.google.experiment.soundexplorer.vm.SoundExplorerViewModel
  * Represents the main screen structure with the dark background and bottom actions.
  */
 @Composable
-fun ActionScreen(viewModel: SoundExplorerViewModel = viewModel()) {
+fun ActionScreen(
+    viewModel: SoundExplorerViewModel = viewModel(),
+    onShowMenuChange: (Boolean) -> Unit = {},
+) {
     // State to control the visibility of the dropdown menu
     var showMenu by remember { mutableStateOf(false) }
     var showDebug by remember { mutableStateOf(false) }
@@ -48,7 +51,10 @@ fun ActionScreen(viewModel: SoundExplorerViewModel = viewModel()) {
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 16.dp, vertical = 24.dp), // Added vertical padding
             showMenu = showMenu, // Pass state down
-            onShowMenuChange = { showMenu = it }, // Lambda to update state
+            onShowMenuChange = {
+                showMenu = it
+                onShowMenuChange(showMenu)
+            }, // Lambda to update state
             showDebugMenu = showDebug, // Pass state down
             onShowDebugMenuChange = { showDebug = it }, // Lambda to update state
             onAddShapeClick = { viewModel.onAddShapeClick() },
