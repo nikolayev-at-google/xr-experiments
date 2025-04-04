@@ -2,6 +2,7 @@ package com.google.experiment.soundexplorer.core
 
 import android.util.Log
 import androidx.xr.scenecore.Model
+import com.google.experiment.soundexplorer.di.IoDispatcher
 import androidx.xr.scenecore.Session as SceneCoreSession // Alias for clarity
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
@@ -12,29 +13,18 @@ import com.google.experiment.soundexplorer.ext.loadGltfModel
 
 class GlbModelRepositoryImpl @Inject constructor(
     // Inject the IO dispatcher for background loading tasks
-    private val ioDispatcher: CoroutineDispatcher
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    private val sceneCoreSession: SceneCoreSession
 ) : GlbModelRepository {
 
     companion object {
         private const val TAG = "ModelRepImpl"
     }
 
-    private lateinit var scenecoreSession: SceneCoreSession
-
     // Cache for ongoing loading jobs (Deferred ensures only one load per identifier)
     private val loadingJobs = ConcurrentHashMap<GlbModel, Deferred<Result<Model>>>()
     // Cache for successfully loaded models
     private val loadedModels = ConcurrentHashMap<GlbModel, Model>()
-
-    override fun initializeSession(session: SceneCoreSession) {
-        if (this.scenecoreSession !== session) {
-            Log.w(TAG, "Repository already initialized with a different session. Ignoring new session.")
-            // Or decide on a different strategy, like resetting caches if the session changes.
-        } else {
-            this.scenecoreSession = session
-            Log.i(TAG, "SceneCoreSession initialized in Repository.")
-        }
-    }
 
     override suspend fun getOrLoadModel(modelIdentifier: GlbModel): Result<Model> {
         // 1. Check memory cache for already loaded models
@@ -57,7 +47,7 @@ class GlbModelRepositoryImpl @Inject constructor(
                     Log.d(TAG, "Calling session.loadGltfModel for URI: $modelIdentifier")
 
                     // Call the actual suspend loading function (extension function assumed)
-                    val model = scenecoreSession.loadGltfModel(modelIdentifier.assetName)
+                    val model = sceneCoreSession.loadGltfModel(modelIdentifier.assetName)
                         ?: throw RuntimeException("SceneCoreSession loadGltfModel returned null for '$identifier'")
 
                     // Cache the successfully loaded model

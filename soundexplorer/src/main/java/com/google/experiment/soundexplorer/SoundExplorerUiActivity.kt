@@ -12,7 +12,6 @@ import com.google.experiment.soundexplorer.vm.SoundExplorerViewModel
 import kotlin.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,7 +45,6 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,8 +56,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.xr.compose.spatial.Orbiter
 import androidx.xr.compose.spatial.OrbiterEdge
 import androidx.xr.compose.subspace.layout.height
+import dagger.hilt.android.AndroidEntryPoint
 
 
+@AndroidEntryPoint
 class SoundExplorerUiActivity : ComponentActivity() {
     companion object {
         private const val TAG = "UIActivity"
@@ -71,6 +71,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate started.")
+
         setContent { Subspace { MainMenu() } }
     }
 

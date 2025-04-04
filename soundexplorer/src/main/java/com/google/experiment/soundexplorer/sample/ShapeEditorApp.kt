@@ -121,7 +121,7 @@ fun ShapeEditorApp() {
                         onClick = { showMenu = false }
                     )
 
-                    Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
+                    HorizontalDivider(thickness = 1.dp, color = Color(0xFFE0E0E0))
 
                     // Delete All option
                     MenuOption(
@@ -130,7 +130,7 @@ fun ShapeEditorApp() {
                         onClick = { showMenu = false }
                     )
 
-                    Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
+                    HorizontalDivider(thickness = 1.dp, color = Color(0xFFE0E0E0))
 
                     // Close App option
                     MenuOption(

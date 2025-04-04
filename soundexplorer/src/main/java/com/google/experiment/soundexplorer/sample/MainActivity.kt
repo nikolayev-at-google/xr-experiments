@@ -16,7 +16,11 @@ import androidx.xr.runtime.SessionResumeSuccess
 import androidx.xr.scenecore.Session
 import com.google.experiment.soundexplorer.core.GlbModelRepository
 import com.google.experiment.soundexplorer.sample.SoundExplorerViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     companion object {
         private const val TAG = "MainActivity"
@@ -45,8 +49,8 @@ class MainActivity : ComponentActivity() {
     // Get ViewModel via delegate (Hilt handles injection if @AndroidEntryPoint and @HiltViewModel used)
     private val viewModel: SoundExplorerViewModel by viewModels()
 
-    // // TODO: Inject the ModelRepository using Hilt/Dagger
-    // @Inject
+    // Inject the ModelRepository using Hilt/Dagger
+    @Inject
     lateinit var modelRepository: GlbModelRepository // Needs DI setup
 
     @SuppressLint("RestrictedApi")
@@ -73,7 +77,7 @@ class MainActivity : ComponentActivity() {
                     if (!::modelRepository.isInitialized) {
                         throw IllegalStateException("ModelRepository has not been initialized/injected.")
                     }
-                    modelRepository.initializeSession(scenecoreSession)
+//                    modelRepository.initializeSession(scenecoreSession)
                     Log.d(TAG, "ModelRepository initialized with SceneCoreSession.")
 
                     // Trigger loading in ViewModel *after* repository is initialized
@@ -99,11 +103,6 @@ class MainActivity : ComponentActivity() {
                 requestPermissionLauncher.launch(result.permissions.toTypedArray())
                 // Do not set content here; Activity will likely be recreated
             }
-            else -> {
-                Log.e(TAG, "Error creating ARCore session: ${result}")
-                Toast.makeText(this, "Failed to create AR session: ${result}", Toast.LENGTH_LONG).show()
-                finish() // Close on critical error
-            }
         }
     }
 
@@ -121,7 +120,6 @@ class MainActivity : ComponentActivity() {
                 Log.w(TAG, "Permissions required for resume. Requesting...")
                 requestPermissionLauncher.launch(result.permissions.toTypedArray())
             }
-            else -> Log.e(TAG, "Error resuming ARCore session")
         }
     }
 

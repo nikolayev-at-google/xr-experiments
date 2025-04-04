@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -552,11 +553,15 @@ fun FingerExtensionSection(handData: HandTrackingViewModel.HandData) {
                 }
 
                 LinearProgressIndicator(
-                    progress = ratio / 2.0f, // Scale to make visualization more reasonable
-                    color = if (isExtended) Color.Green else Color.Gray,
+                    progress = {
+                        ratio / 2.0f // Scale to make visualization more reasonable
+                    },
                     modifier = Modifier
                         .weight(1f)
-                        .height(8.dp)
+                        .height(8.dp),
+                    color = if (isExtended) Color.Green else Color.Gray,
+                    trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                    strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
                 )
 
                 Text(
@@ -593,11 +598,15 @@ fun FingerToPalmSection(handData: HandTrackingViewModel.HandData) {
                 val isClose = distance < 1.0f
 
                 LinearProgressIndicator(
-                    progress = (2.0f - distance.coerceIn(0f, 2.0f)) / 2.0f, // Invert scale
-                    color = if (isClose) Color.Red else Color.Gray,
+                    progress = {
+                        (2.0f - distance.coerceIn(0f, 2.0f)) / 2.0f // Invert scale
+                    },
                     modifier = Modifier
                         .weight(1f)
-                        .height(8.dp)
+                        .height(8.dp),
+                    color = if (isClose) Color.Red else Color.Gray,
+                    trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                    strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
                 )
 
                 Text(

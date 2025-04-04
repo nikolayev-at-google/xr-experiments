@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +44,13 @@ fun SoundExplorerMainScreen(viewModel: SoundExplorerViewModel) {
             is AllModelsLoadingState.InProgress -> {
                 // Show progress
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(progress = state.loadedCount.toFloat() / state.totalCount.toFloat())
+                    CircularProgressIndicator(
+                    progress = { state.loadedCount.toFloat() / state.totalCount.toFloat() },
+                        color = ProgressIndicatorDefaults.circularColor,
+                    strokeWidth = ProgressIndicatorDefaults.CircularStrokeWidth,
+                    trackColor = ProgressIndicatorDefaults.circularIndeterminateTrackColor,
+                    strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Loading models: ${state.loadedCount} / ${state.totalCount}")
                 }

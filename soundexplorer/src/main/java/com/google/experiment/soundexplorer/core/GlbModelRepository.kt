@@ -15,7 +15,7 @@ interface GlbModelRepository {
      * Idempotent: subsequent calls with the same session should be safe.
      * @param session The active SceneCoreSession.
      */
-    fun initializeSession(session: SceneCoreSession)
+//    fun initializeSession(session: SceneCoreSession)
 
     /**
      * Gets a model by its identifier, loading it if necessary.

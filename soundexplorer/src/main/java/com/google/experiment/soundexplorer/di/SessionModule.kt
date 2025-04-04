@@ -1,5 +1,6 @@
 package com.google.experiment.soundexplorer.di
 
+import android.app.Activity
 import android.content.Context
 import androidx.activity.ComponentActivity
 import dagger.Module
@@ -7,6 +8,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.qualifiers.ActivityContext
+import dagger.hilt.android.scopes.ActivityScoped
+import dagger.hilt.components.SingletonComponent
 import androidx.xr.scenecore.Session as SceneCoreSession
 
 
@@ -15,7 +18,8 @@ import androidx.xr.scenecore.Session as SceneCoreSession
 object SessionModule {
 
     @Provides
-    fun provideSceneCoreSession(@ActivityContext context: Context): SceneCoreSession =
-        SceneCoreSession.create(activity = (context as ComponentActivity))
+    @ActivityScoped
+    fun provideSceneCoreSession(activity: Activity): SceneCoreSession =
+        SceneCoreSession.create(activity = (activity as ComponentActivity))
 
 }
