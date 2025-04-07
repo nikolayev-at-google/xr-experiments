@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.google.experiment.soundexplorer.ui.ActionScreen
-import com.google.experiment.soundexplorer.vm.SoundExplorerViewModel
 import kotlin.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -56,7 +55,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.xr.compose.spatial.Orbiter
 import androidx.xr.compose.spatial.OrbiterEdge
 import androidx.xr.compose.subspace.layout.height
+import com.google.experiment.soundexplorer.core.GlbModel
+import com.google.experiment.soundexplorer.core.GlbModelRepository
+import com.google.experiment.soundexplorer.vm.SoundExplorerUiViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -65,18 +68,23 @@ class SoundExplorerUiActivity : ComponentActivity() {
         private const val TAG = "UIActivity"
     }
 
-    private val viewModel : SoundExplorerViewModel by viewModels()
+    private val viewModel : SoundExplorerUiViewModel by viewModels()
+
+    @Inject
+    lateinit var modelRepository : GlbModelRepository
 
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate started.")
 
+//        viewModel.triggerModelLoading(modelRepository)
+
         setContent { Subspace { MainMenu() } }
     }
 
     @Composable
-    fun MainMenu(viewModel: SoundExplorerViewModel = viewModel()) {
+    fun MainMenu(viewModel: SoundExplorerUiViewModel = viewModel()) {
             SpatialBox(
                 modifier = SubspaceModifier.width(600.dp).height(600.dp),
                 alignment = SpatialAlignment.BottomCenter,
@@ -193,7 +201,9 @@ class SoundExplorerUiActivity : ComponentActivity() {
         }
 
         LaunchedEffect(glbFileName) {
-            shape = GltfModel.create(session, glbFileName).await()
+//            TODO: load model from cach here!!!!
+//            shape = GltfModel.create(session, glbFileName).await()
+            shape = modelRepository.getOrLoadModel(GlbModel.GlbModel01).getOrNull() as GltfModel?
         }
 
         Box(

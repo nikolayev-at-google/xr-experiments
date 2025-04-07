@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.google.experiment.soundexplorer.R
-import com.google.experiment.soundexplorer.vm.SoundExplorerViewModel
+import com.google.experiment.soundexplorer.vm.SoundExplorerUiViewModel
 
 
 // --- Composable Functions ---
@@ -33,7 +33,7 @@ import com.google.experiment.soundexplorer.vm.SoundExplorerViewModel
  */
 @Composable
 fun ActionScreen(
-    viewModel: SoundExplorerViewModel = viewModel(),
+    viewModel: SoundExplorerUiViewModel = viewModel(),
     onShowMenuChange: (Boolean) -> Unit = {},
 ) {
     // State to control the visibility of the dropdown menu
@@ -75,7 +75,7 @@ fun BottomActions(
     onShowMenuChange: (Boolean) -> Unit, // Receive lambda to update state
     onAddShapeClick: () -> Unit,
     onPlayClick: () -> Unit,
-    viewModel: SoundExplorerViewModel = viewModel()
+    viewModel: SoundExplorerUiViewModel = viewModel()
 ) {
     Box(
         modifier = Modifier
@@ -225,9 +225,9 @@ fun BottomActions(
 
         if (showDebugMenu)
             DebugMenuScreen(
-                leftValueSet = { viewModel.onLeftValueChange(it) },
-                bottomValueSet = { viewModel.onBottomValueChange(it) },
-                rightValueSet = { viewModel.onRightValueChange(it) }
+                leftValueSet = { /*viewModel.onLeftValueChange(it)*/ },
+                bottomValueSet = { /*viewModel.onBottomValueChange(it)*/ },
+                rightValueSet = { /*viewModel.onRightValueChange(it)*/ }
             )
     }
 

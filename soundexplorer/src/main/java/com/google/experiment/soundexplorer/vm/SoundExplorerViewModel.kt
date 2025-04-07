@@ -26,7 +26,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SoundExplorerViewModel  @Inject constructor(
-    private val modelRepository : GlbModelRepository
+//    private val modelRepository : GlbModelRepository
 ): ViewModel() {
     private val _slidersValues = MutableStateFlow<Vector3>(Vector3.Zero + Vector3(-0.2f, 0.4f, 0f))
     val slidersValues: StateFlow<Vector3> = _slidersValues.asStateFlow()
@@ -90,13 +90,13 @@ class SoundExplorerViewModel  @Inject constructor(
                     jobs += launch { // Launch each retrieval job
                         Log.d(TAG, "Requesting model '$identifier' from repository.")
                         // Call the repository's suspend function
-                        val result = modelRepository.getOrLoadModel(identifier)
-                        results[identifier] = result // Store the Result<Model>
+//                        val result = modelRepository.getOrLoadModel(identifier)
+//                        results[identifier] = result // Store the Result<Model>
 
                         // Update progress based on successful loads only
-                        val currentSuccessCount = results.count { it.value.isSuccess }
-                        _loadingState.value = AllModelsLoadingState.InProgress(currentSuccessCount, totalModels)
-                        Log.d(TAG, "Result for '$identifier': ${if(result.isSuccess) "Success" else "Failure"}")
+//                        val currentSuccessCount = results.count { it.value.isSuccess }
+//                        _loadingState.value = AllModelsLoadingState.InProgress(currentSuccessCount, totalModels)
+//                        Log.d(TAG, "Result for '$identifier': ${if(result.isSuccess) "Success" else "Failure"}")
                     }
                 }
             } // coroutineScope waits for all launched jobs
