@@ -110,43 +110,52 @@ class SoundExplorerUiActivity : ComponentActivity() {
             SpatialColumn {
                 AppPanel(
                     modifier = columnPanelModifier.testTag("02_static"),
-                    glbFileName = "glb2/02_static.glb"
+                    glbFileName = "glb2/02_static.glb",
+                    glbModel = GlbModel.GlbModel01Anim
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("05_static"),
-                    glbFileName = "glb2/05_static.glb"
+                    glbFileName = "glb2/05_static.glb",
+                    glbModel = GlbModel.GlbModel02Anim
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("08_static"),
-                    glbFileName = "glb2/08_static.glb"
+                    glbFileName = "glb2/08_static.glb",
+                    glbModel = GlbModel.GlbModel03Anim
                 )
             }
             SpatialColumn {
                 AppPanel(
                     modifier = columnPanelModifier.testTag("10_static"),
-                    glbFileName = "glb2/10_static.glb"
+                    glbFileName = "glb2/10_static.glb",
+                    glbModel = GlbModel.GlbModel04Anim
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("11_static"),
-                    glbFileName = "glb2/11_static.glb"
+                    glbFileName = "glb2/11_static.glb",
+                    glbModel = GlbModel.GlbModel05Anim
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("16_static"),
-                    glbFileName = "glb2/16_static.glb"
+                    glbFileName = "glb2/16_static.glb",
+                    glbModel = GlbModel.GlbModel06Anim
                 )
             }
             SpatialColumn {
                 AppPanel(
                     modifier = columnPanelModifier.testTag("18_static"),
-                    glbFileName = "glb2/18_static.glb"
+                    glbFileName = "glb2/18_static.glb",
+                    glbModel = GlbModel.GlbModel07Anim
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
-                    glbFileName = "glb2/01_animated.glb"
+                    glbFileName = "glb2/01_animated.glb",
+                    glbModel = GlbModel.GlbModel08Anim
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
-                    glbFileName = "glb2/01_animated.glb"
+                    glbFileName = "glb2/01_animated.glb",
+                    glbModel = GlbModel.GlbModel09Anim
                 )
             }
         }
@@ -156,21 +165,22 @@ class SoundExplorerUiActivity : ComponentActivity() {
     @Composable
     fun AppPanel(
         modifier: SubspaceModifier = SubspaceModifier,
-        glbFileName: String = "glb2/01_animated.glb"
+        glbFileName: String = "glb2/01_animated.glb",
+        glbModel : GlbModel = GlbModel.GlbModel01
     ) {
         SpatialPanel(modifier = modifier.movable()) {
-            PanelContent(glbFileName = glbFileName)
+            PanelContent(glbFileName = glbFileName, glbModel = glbModel)
         }
     }
 
     @UiComposable
     @Composable
     fun PanelContent(
-        glbFileName: String
+        glbFileName: String,
+        glbModel : GlbModel = GlbModel.GlbModel01
     ) {
 
-        val session =
-            checkNotNull(LocalSession.current) {
+        val session = checkNotNull(LocalSession.current) {
                 "LocalSession.current was null. Session must be available."
             }
         var isOrbiterVisible by remember { mutableStateOf(false) }
@@ -179,7 +189,10 @@ class SoundExplorerUiActivity : ComponentActivity() {
         }
         val gltfEntity = shape?.let {
             remember {
-                GltfModelEntity.create(session, it).apply {
+                Log.d(TAG, "gltfEntity[${glbModel.assetName}] executionTime: ")
+                // calculate time to execute commad to load model
+                val startTime = System.currentTimeMillis()
+                val gltfModelEntity = GltfModelEntity.create(session, it).apply {
                     addComponent(
                         InteractableComponent.create(session, mainExecutor) { ie ->
                         when (ie.action) {
@@ -197,13 +210,26 @@ class SoundExplorerUiActivity : ComponentActivity() {
                         }
                     })
                 }
+                val endTime = System.currentTimeMillis()
+                val executionTime = endTime - startTime
+
+                Log.d(TAG, "gltfEntity executionTime[${glbModel.assetName}]: $executionTime")
+
+                return@remember gltfModelEntity
             }
         }
 
         LaunchedEffect(glbFileName) {
 //            TODO: load model from cach here!!!!
 //            shape = GltfModel.create(session, glbFileName).await()
-            shape = modelRepository.getOrLoadModel(GlbModel.GlbModel01).getOrNull() as GltfModel?
+            Log.d(TAG, "executionTime[${glbModel.assetName}]: ")
+            // calculate time to execute commad to load model
+            val startTime = System.currentTimeMillis()
+            shape = modelRepository.getOrLoadModel(glbModel).getOrNull() as GltfModel?
+            val endTime = System.currentTimeMillis()
+            val executionTime = endTime - startTime
+
+            Log.d(TAG, "executionTime[${glbModel.assetName}]: $executionTime")
         }
 
         Box(
@@ -221,7 +247,9 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 Orbiter(position = OrbiterEdge.Bottom, offset = 64.dp) {
                     IconButton(
                         onClick = {  },
-                        modifier = Modifier.width(56.dp).background(Color.White, shape = RoundedCornerShape(12.dp)),
+                        modifier = Modifier
+                            .width(56.dp)
+                            .background(Color.White, shape = RoundedCornerShape(12.dp)),
                     ) {
                         Icon(imageVector = Icons.Filled.Menu, contentDescription = "Add highlight")
                     }
