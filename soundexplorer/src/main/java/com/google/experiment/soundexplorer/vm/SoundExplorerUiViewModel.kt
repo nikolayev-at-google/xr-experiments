@@ -40,18 +40,12 @@ class SoundExplorerUiViewModel @Inject constructor() : ViewModel() {
 
     val soundComponents: SoundComponents
         get() {
-            if (_soundComponents == null) {
-                throw IllegalStateException("Sound components not initialized!")
-            }
-            return _soundComponents!!
+            return checkNotNull(_soundComponents)
         }
 
     val soundComposition: SoundCompositionSimple
         get() {
-            if (_composition == null) {
-                throw IllegalStateException("Sound composition not initialized!")
-            }
-            return _composition!!
+            return checkNotNull(_composition)
         }
 
     companion object {
