@@ -92,26 +92,12 @@ class SoundCompositionSimple (
         }
     }
 
-    // private var callCount: Int = 0
-    // private var streamId: Int? = 0
-
     private fun playSound(component: SoundCompositionComponent) {
         synchronized(this) {
-            this.play() // hack
-
             component.isPlaying = true
-            // if (component.activeSoundStreamId != null) {
+            if (this.isPlaying) {
                 this.soundPoolManager.setVolume(component.activeSoundStreamId, 1.0f)
-                /* if (callCount == 0) {
-                    streamId = this.soundPoolManager.playSound(session, component.entity!!, component.activeSoundId, 1.0f, true)
-                    this.soundPoolManager.setVolume(streamId!!, 0.0f)
-                } else if (callCount % 2 == 1) {
-                    this.soundPoolManager.setVolume(streamId!!, 1.0f)
-                } else {
-                    this.soundPoolManager.setVolume(streamId!!, 0.0f)
-                }
-                ++callCount */
-            // }
+            }
         }
     }
 
@@ -123,14 +109,10 @@ class SoundCompositionSimple (
     }
 
     private fun replaceSound(component: SoundCompositionComponent, newSoundStreamId: Int?) {
-        // HACK : Multiple streams can not be associated with a single entity
-        //        For initial check in, just throw if someone tries to swap the sound by changing volume.
-        // throw IllegalStateException("Multiple streams can not be associated with a single entity. Todo- fix")
-
         synchronized(this) {
             this.soundPoolManager.setVolume(component.activeSoundStreamId, 0.0f)
             if (newSoundStreamId != null) {
-                this.soundPoolManager.setVolume(newSoundStreamId, if (component.isPlaying) 1.0f else 0.0f)
+                this.soundPoolManager.setVolume(newSoundStreamId, if (component.isPlaying && this.isPlaying) 1.0f else 0.0f)
             }
         }
     }
@@ -165,7 +147,6 @@ class SoundCompositionSimple (
                 throw IllegalStateException("Tried to initialize sound on a component that was not attached to an entity.")
             }
 
-            // TODO - Multiple streams can not be associated with a single entity. Need to fix.
             val lowVolume = if (isPlaying && compositionComponent.isPlaying &&
                 compositionComponent.soundType == SoundSampleType.LOW) 1.0f else 0.0f
             compositionComponent.lowSoundStreamId = checkNotNull(soundPoolManager.playSound(
@@ -186,7 +167,6 @@ class SoundCompositionSimple (
                 loop = true))
             soundPoolManager.setVolume(compositionComponent.mediumSoundStreamId!!, mediumVolume)
 
-            // TODO - Multiple streams can not be associated with a single entity. Need to fix.
             val highVolume = if (isPlaying && compositionComponent.isPlaying &&
                 compositionComponent.soundType == SoundSampleType.HIGH) 1.0f else 0.0f
             compositionComponent.highSoundStreamId = checkNotNull(soundPoolManager.playSound(
