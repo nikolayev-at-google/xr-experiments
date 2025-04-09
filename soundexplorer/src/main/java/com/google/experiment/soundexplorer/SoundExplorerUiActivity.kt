@@ -51,14 +51,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.xr.compose.spatial.Orbiter
 import androidx.xr.compose.spatial.OrbiterEdge
 import androidx.xr.compose.subspace.layout.height
 import com.google.experiment.soundexplorer.core.GlbModel
 import com.google.experiment.soundexplorer.core.GlbModelRepository
+import com.google.experiment.soundexplorer.sound.SoundCompositionSimple
+import com.google.experiment.soundexplorer.sound.SoundCompositionSimple.SoundSampleType
+import com.google.experiment.soundexplorer.sound.SoundPoolManager
 import com.google.experiment.soundexplorer.vm.SoundExplorerUiViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -76,11 +81,20 @@ class SoundExplorerUiActivity : ComponentActivity() {
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         Log.d(TAG, "onCreate started.")
 
 //        viewModel.triggerModelLoading(modelRepository)
 
-        setContent { Subspace { MainMenu() } }
+        setContent {
+            val session = LocalSession.current
+            if (session == null) {
+                return@setContent
+            }
+
+            this.viewModel.initialize(session)
+
+            Subspace { MainMenu() } }
     }
 
     @Composable
@@ -105,59 +119,80 @@ class SoundExplorerUiActivity : ComponentActivity() {
 
     @Composable
     fun ShapeMenu() {
+        val soundsReady = viewModel.soundComponentsReady.collectAsState()
+        if (!soundsReady.value) {
+            return
+        }
+
         SpatialRow(SubspaceModifier.testTag("ShapeGrid")) {
             val columnPanelModifier = SubspaceModifier.size(150.dp).padding(20.dp)
             SpatialColumn {
                 AppPanel(
                     modifier = columnPanelModifier.testTag("02_static"),
                     glbFileName = "glb2/02_static.glb",
-                    glbModel = GlbModel.GlbModel01Anim
+                    glbModel = GlbModel.GlbModel01Anim,
+                    checkNotNull(viewModel.soundComponents.instrument1Component)
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("05_static"),
                     glbFileName = "glb2/05_static.glb",
-                    glbModel = GlbModel.GlbModel02Anim
+                    glbModel = GlbModel.GlbModel02Anim,
+                    checkNotNull(viewModel.soundComponents.instrument2Component)
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("08_static"),
                     glbFileName = "glb2/08_static.glb",
-                    glbModel = GlbModel.GlbModel03Anim
+                    glbModel = GlbModel.GlbModel03Anim,
+                    checkNotNull(viewModel.soundComponents.instrument3Component)
                 )
             }
             SpatialColumn {
                 AppPanel(
                     modifier = columnPanelModifier.testTag("10_static"),
                     glbFileName = "glb2/10_static.glb",
-                    glbModel = GlbModel.GlbModel04Anim
+                    glbModel = GlbModel.GlbModel04Anim,
+                    checkNotNull(viewModel.soundComponents.instrument4Component)
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("11_static"),
                     glbFileName = "glb2/11_static.glb",
-                    glbModel = GlbModel.GlbModel05Anim
+                    glbModel = GlbModel.GlbModel05Anim,
+                    checkNotNull(viewModel.soundComponents.instrument5Component)
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("16_static"),
                     glbFileName = "glb2/16_static.glb",
-                    glbModel = GlbModel.GlbModel06Anim
+                    glbModel = GlbModel.GlbModel06Anim,
+                    checkNotNull(viewModel.soundComponents.instrument6Component)
                 )
             }
             SpatialColumn {
                 AppPanel(
                     modifier = columnPanelModifier.testTag("18_static"),
                     glbFileName = "glb2/18_static.glb",
-                    glbModel = GlbModel.GlbModel07Anim
+                    glbModel = GlbModel.GlbModel07Anim,
+                    checkNotNull(viewModel.soundComponents.instrument7Component)
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
                     glbFileName = "glb2/01_animated.glb",
-                    glbModel = GlbModel.GlbModel08Anim
+                    glbModel = GlbModel.GlbModel08Anim,
+                    checkNotNull(viewModel.soundComponents.instrument8Component)
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
                     glbFileName = "glb2/01_animated.glb",
-                    glbModel = GlbModel.GlbModel09Anim
+                    glbModel = GlbModel.GlbModel09Anim,
+                    checkNotNull(viewModel.soundComponents.instrument9Component)
                 )
             }
+        }
+
+        // Currently, all sound components need to be added to entities before the composition can
+        // be played. todo- modify to be robust to this
+        val unattachedComponents = viewModel.soundComposition.unattachedComponents.collectAsState()
+        if (unattachedComponents.value == 0) {
+            viewModel.soundComposition.play()
         }
     }
 
@@ -166,10 +201,11 @@ class SoundExplorerUiActivity : ComponentActivity() {
     fun AppPanel(
         modifier: SubspaceModifier = SubspaceModifier,
         glbFileName: String = "glb2/01_animated.glb",
-        glbModel : GlbModel = GlbModel.GlbModel01
+        glbModel : GlbModel = GlbModel.GlbModel01,
+        soundComponent: SoundCompositionSimple.SoundCompositionComponent
     ) {
         SpatialPanel(modifier = modifier.movable()) {
-            PanelContent(glbFileName = glbFileName, glbModel = glbModel)
+            PanelContent(glbFileName = glbFileName, glbModel = glbModel, soundComponent = soundComponent)
         }
     }
 
@@ -177,7 +213,8 @@ class SoundExplorerUiActivity : ComponentActivity() {
     @Composable
     fun PanelContent(
         glbFileName: String,
-        glbModel : GlbModel = GlbModel.GlbModel01
+        glbModel : GlbModel = GlbModel.GlbModel01,
+        soundComponent: SoundCompositionSimple.SoundCompositionComponent
     ) {
 
         val session = checkNotNull(LocalSession.current) {
@@ -189,15 +226,34 @@ class SoundExplorerUiActivity : ComponentActivity() {
         }
         val gltfEntity = shape?.let {
             remember {
+
                 Log.d(TAG, "gltfEntity[${glbModel.assetName}] executionTime: ")
                 // calculate time to execute commad to load model
                 val startTime = System.currentTimeMillis()
-                val gltfModelEntity = GltfModelEntity.create(session, it).apply {
+                val gltfModelEntity = GltfModelEntity.create(session, it)
+                gltfModelEntity.addComponent(soundComponent)
+                gltfModelEntity.apply {
                     addComponent(
                         InteractableComponent.create(session, mainExecutor) { ie ->
                         when (ie.action) {
                             InputEvent.ACTION_DOWN -> {
                                 startAnimation(loop = false)
+
+                                // todo- currently this just iterates through the different sounds on click
+                                //       we need to implement the real behavior where the sound changes when moved
+                                if (!soundComponent.isPlaying) {
+                                    soundComponent.soundType = SoundSampleType.LOW
+                                    soundComponent.play()
+                                } else {
+                                    when (soundComponent.soundType) {
+                                        SoundSampleType.LOW ->
+                                            soundComponent.soundType = SoundSampleType.MEDIUM
+                                        SoundSampleType.MEDIUM ->
+                                            soundComponent.soundType = SoundSampleType.HIGH
+                                        SoundSampleType.HIGH ->
+                                            soundComponent.stop()
+                                    }
+                                }
                             }
                             InputEvent.ACTION_HOVER_ENTER -> {
                                 isOrbiterVisible = true
