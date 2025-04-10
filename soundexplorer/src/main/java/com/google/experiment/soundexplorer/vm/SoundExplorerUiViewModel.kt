@@ -2,9 +2,11 @@
 
 package com.google.experiment.soundexplorer.vm
 
+import android.util.Log
 import androidx.concurrent.futures.await
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.xr.compose.subspace.layout.PoseChangeEvent
 import androidx.xr.scenecore.GltfModel
 import androidx.xr.scenecore.Model
 import androidx.xr.scenecore.Session
@@ -81,6 +83,10 @@ class SoundExplorerUiViewModel @Inject constructor() : ViewModel() {
     }
 
     fun onPlayClick() {
+    }
+
+    fun onModelPoseChange(glbModel : GlbModel, poseEvent: PoseChangeEvent) {
+        Log.d(TAG, "${glbModel} - poseEvent: ${poseEvent.pose}")
     }
 
 }

@@ -33,5 +33,16 @@ sealed class GlbModel(val assetName: String) {
             GlbModel08,
             GlbModel09
         )
+        val allGlbAnimatedModels = listOf(
+            GlbModel01Anim,
+            GlbModel02Anim,
+            GlbModel03Anim,
+            GlbModel04Anim,
+            GlbModel05Anim,
+            GlbModel06Anim,
+            GlbModel07Anim,
+            GlbModel08Anim,
+            GlbModel09Anim
+        )
     }
 }
