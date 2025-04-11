@@ -73,10 +73,12 @@ import androidx.xr.runtime.math.Vector3
 import androidx.xr.scenecore.MovableComponent
 import com.google.experiment.soundexplorer.core.GlbModel
 import com.google.experiment.soundexplorer.core.GlbModelRepository
+<<<<<<< HEAD
 import com.google.experiment.soundexplorer.sample.SoundExplorerViewModel
 import com.google.experiment.soundexplorer.sound.SoundCompositionSimple
+=======
+>>>>>>> 98bc03c (cleanup, some bug)
 import com.google.experiment.soundexplorer.sound.SoundCompositionSimple.SoundSampleType
-import com.google.experiment.soundexplorer.sound.SoundPoolManager
 import com.google.experiment.soundexplorer.vm.SoundExplorerUiViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -120,7 +122,12 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 return@setContent
             }
 
-            this.viewModel.initialize(session)
+            this.viewModel.initializeSoundComponents(session)
+
+            val soundsLoaded = this.viewModel.soundPool.soundsLoaded.collectAsState()
+            if (!soundsLoaded.value) { // do something while sounds are loading?
+                return@setContent
+            }
 
             Subspace { MainMenu() } }
     }
@@ -147,11 +154,6 @@ class SoundExplorerUiActivity : ComponentActivity() {
 
     @Composable
     fun ShapeMenu() {
-        val soundsReady = viewModel.soundComponentsReady.collectAsState()
-        if (!soundsReady.value) {
-            return
-        }
-
         SpatialRow(SubspaceModifier.testTag("ShapeGrid")) {
             val columnPanelModifier = SubspaceModifier.size(150.dp).padding(20.dp)
             SpatialColumn {
@@ -159,19 +161,19 @@ class SoundExplorerUiActivity : ComponentActivity() {
                     modifier = columnPanelModifier.testTag("02_static"),
                     glbFileName = "glb2/02_static.glb",
                     glbModel = GlbModel.GlbModel01Anim,
-                    checkNotNull(viewModel.soundComponents.instrument1Component)
+                    viewModel.soundPool.inst01lowId, viewModel.soundPool.inst01midId, viewModel.soundPool.inst01highId
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("05_static"),
                     glbFileName = "glb2/05_static.glb",
                     glbModel = GlbModel.GlbModel02Anim,
-                    checkNotNull(viewModel.soundComponents.instrument2Component)
+                    viewModel.soundPool.inst02lowId, viewModel.soundPool.inst02midId, viewModel.soundPool.inst02highId
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("08_static"),
                     glbFileName = "glb2/08_static.glb",
                     glbModel = GlbModel.GlbModel03Anim,
-                    checkNotNull(viewModel.soundComponents.instrument3Component)
+                    viewModel.soundPool.inst03lowId, viewModel.soundPool.inst03midId, viewModel.soundPool.inst03highId
                 )
             }
             SpatialColumn {
@@ -179,19 +181,19 @@ class SoundExplorerUiActivity : ComponentActivity() {
                     modifier = columnPanelModifier.testTag("10_static"),
                     glbFileName = "glb2/10_static.glb",
                     glbModel = GlbModel.GlbModel04Anim,
-                    checkNotNull(viewModel.soundComponents.instrument4Component)
+                    viewModel.soundPool.inst04lowId, viewModel.soundPool.inst04midId, viewModel.soundPool.inst04highId
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("11_static"),
                     glbFileName = "glb2/11_static.glb",
                     glbModel = GlbModel.GlbModel05Anim,
-                    checkNotNull(viewModel.soundComponents.instrument5Component)
+                    viewModel.soundPool.inst05lowId, viewModel.soundPool.inst05midId, viewModel.soundPool.inst05highId
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("16_static"),
                     glbFileName = "glb2/16_static.glb",
                     glbModel = GlbModel.GlbModel06Anim,
-                    checkNotNull(viewModel.soundComponents.instrument6Component)
+                    viewModel.soundPool.inst06lowId, viewModel.soundPool.inst06midId, viewModel.soundPool.inst06highId
                 )
             }
             SpatialColumn {
@@ -199,28 +201,21 @@ class SoundExplorerUiActivity : ComponentActivity() {
                     modifier = columnPanelModifier.testTag("18_static"),
                     glbFileName = "glb2/18_static.glb",
                     glbModel = GlbModel.GlbModel07Anim,
-                    checkNotNull(viewModel.soundComponents.instrument7Component)
+                    viewModel.soundPool.inst07lowId, viewModel.soundPool.inst07midId, viewModel.soundPool.inst07highId
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
                     glbFileName = "glb2/01_animated.glb",
                     glbModel = GlbModel.GlbModel08Anim,
-                    checkNotNull(viewModel.soundComponents.instrument8Component)
+                    viewModel.soundPool.inst08lowId, viewModel.soundPool.inst08midId, viewModel.soundPool.inst08highId
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
                     glbFileName = "glb2/01_animated.glb",
                     glbModel = GlbModel.GlbModel09Anim,
-                    checkNotNull(viewModel.soundComponents.instrument9Component)
+                    viewModel.soundPool.inst09lowId, viewModel.soundPool.inst09midId, viewModel.soundPool.inst09highId
                 )
             }
-        }
-
-        // Currently, all sound components need to be added to entities before the composition can
-        // be played. todo- modify to be robust to this
-        val unattachedComponents = viewModel.soundComposition.unattachedComponents.collectAsState()
-        if (unattachedComponents.value == 0) {
-            viewModel.soundComposition.play()
         }
     }
 
@@ -230,7 +225,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
         modifier: SubspaceModifier = SubspaceModifier,
         glbFileName: String = "glb2/01_animated.glb",
         glbModel : GlbModel = GlbModel.GlbModel01,
-        soundComponent: SoundCompositionSimple.SoundCompositionComponent
+        lowSoundId: Int, mediumSoundId: Int, highSoundId: Int
     ) {
         SpatialPanel(modifier = modifier.movable(
             onPoseChange = { poseEvent ->
@@ -239,7 +234,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 true
             }
         )) {
-            PanelContent(glbFileName = glbFileName, glbModel = glbModel, soundComponent = soundComponent)
+            PanelContent(glbFileName = glbFileName, glbModel = glbModel, lowSoundId, mediumSoundId, highSoundId)
         }
     }
 
@@ -248,7 +243,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
     fun PanelContent(
         glbFileName: String,
         glbModel : GlbModel = GlbModel.GlbModel01,
-        soundComponent: SoundCompositionSimple.SoundCompositionComponent
+        lowSoundId: Int, mediumSoundId: Int, highSoundId: Int
     ) {
 
         val infiniteTransition = rememberInfiniteTransition()
@@ -324,6 +319,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 // calculate time to execute commad to load model
                 val startTime = System.currentTimeMillis()
                 val gltfModelEntity = GltfModelEntity.create(session, it)
+                val soundComponent = viewModel.soundComposition.addComponent(lowSoundId, mediumSoundId, highSoundId)
                 gltfModelEntity.addComponent(soundComponent)
                 gltfModelEntity.apply {
                     addComponent(

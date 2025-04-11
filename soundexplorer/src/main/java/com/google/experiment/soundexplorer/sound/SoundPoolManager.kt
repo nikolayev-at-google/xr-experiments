@@ -10,17 +10,16 @@ import androidx.xr.scenecore.PointSourceAttributes
 import androidx.xr.scenecore.Session
 import androidx.xr.scenecore.SpatialSoundPool
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import java.util.concurrent.atomic.AtomicInteger
 
-class SoundPoolManager () {
-    val MAX_STREAMS = 27
+class SoundPoolManager (maxStreams: Int) {
 
-    val ready: Boolean get() { return this.starting.get() && this.soundsLoading.value == 0 }
+    private val _soundsLoaded = MutableStateFlow<Boolean>(false)
+    val soundsLoaded: StateFlow<Boolean> = _soundsLoaded.asStateFlow()
 
-    private var starting = AtomicBoolean(false)
-    private var soundsLoading = MutableStateFlow<Int>(0)
+    private var soundsLoading = AtomicInteger(0)
 
     private val soundPool: SoundPool = SoundPool.Builder()
         .setAudioAttributes(
@@ -29,13 +28,15 @@ class SoundPoolManager () {
                 .setUsage(USAGE_ASSISTANCE_SONIFICATION)
                 .build()
         )
-        .setMaxStreams(MAX_STREAMS)
+        .setMaxStreams(maxStreams)
         .build()
 
     init {
         soundPool.setOnLoadCompleteListener{ soundPool, sampleId, status ->
             if (status == 0) {
-                this.soundsLoading.update { x -> x - 1 }
+                if (this.soundsLoading.decrementAndGet() == 0) {
+                    this._soundsLoaded.value = true
+                }
             } else {
                 throw RuntimeException("Failed to load sound with status ${status}")
             }
@@ -43,31 +44,16 @@ class SoundPoolManager () {
     }
 
     fun loadSound(applicationContext: Context, soundSampleAssetPath: String): Int? {
-        this.soundsLoading.update { x -> x + 1 }
-
-        if (this.starting.get()) { // not quite thread safe
-            throw IllegalStateException("Tried to load a sound after calling start(). " +
-                    "All sounds must be preloaded.")
+        if (this.soundsLoading.incrementAndGet() == 1) {
+            this._soundsLoaded.value = false
         }
 
-        val fd = applicationContext.assets.openFd(soundSampleAssetPath)
-
-        val sfxId = soundPool.load(fd, 1)
-
-        return sfxId
-    }
-
-    suspend fun start() {
-        if (!this.starting.compareAndSet(false, true)) {
-            return
-        }
-
-        this.soundsLoading.first { x -> x == 0 }
+        return soundPool.load(applicationContext.assets.openFd(soundSampleAssetPath), 1)
     }
 
     fun playSound(session: Session, entity: Entity, soundSampleId: Int,
                   volume: Float = 1.0f, loop: Boolean = false): Int? {
-        if (!this.ready) {
+        if (!this.soundsLoaded.value) {
             return null
         }
 

@@ -6,17 +6,24 @@ import androidx.xr.scenecore.Session
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 
 class SoundCompositionSimple (
     val soundPoolManager: SoundPoolManager,
     val session: Session) {
 
-    private val _unattachedComponents = MutableStateFlow<Int>(0)
-    val unattachedComponents: StateFlow<Int> = _unattachedComponents.asStateFlow()
+    enum class State {
+        LOADING,    // object has been instantiated, but sounds are still loading or there are unattached components
+        READY,      // all known sounds have been loaded and components have been initialized
+        PLAYING,
+        STOPPED
+    }
+
+    private val _state = MutableStateFlow<State>(State.LOADING)
+    val state: StateFlow<State> = _state.asStateFlow()
 
     private var compositionComponents = mutableListOf<SoundCompositionComponent>()
-    private var isPlaying = false
+    private var unattachedComponents = mutableSetOf<SoundCompositionComponent>()
+
     private var soundsInitialized = false
 
     enum class SoundSampleType {
@@ -32,13 +39,6 @@ class SoundCompositionSimple (
         val highSoundId: Int,
         defaultSoundType: SoundSampleType = SoundSampleType.MEDIUM
     ) : Component {
-        val activeSoundId: Int
-            get() = when (this.soundType) {
-                SoundSampleType.LOW -> lowSoundId
-                SoundSampleType.MEDIUM -> mediumSoundId
-                SoundSampleType.HIGH -> highSoundId
-            }
-
         val activeSoundStreamId: Int
             get() = when (this.soundType) {
                 SoundSampleType.LOW -> checkNotNull(lowSoundStreamId)
@@ -50,18 +50,21 @@ class SoundCompositionSimple (
             internal set
 
         var soundType: SoundSampleType = defaultSoundType
+            get() { synchronized(this) { return field } }
             set(value) {
-                if (field == value) {
-                    return
+                synchronized(this) {
+                    if (field == value) {
+                        return
+                    }
+
+                    this.composition.replaceSound(this, when (value) {
+                        SoundSampleType.LOW -> lowSoundId
+                        SoundSampleType.MEDIUM -> mediumSoundId
+                        SoundSampleType.HIGH -> highSoundId
+                    })
+
+                    field = value
                 }
-
-                this.composition.replaceSound(this, when (value) {
-                    SoundSampleType.LOW -> lowSoundId
-                    SoundSampleType.MEDIUM -> mediumSoundId
-                    SoundSampleType.HIGH -> highSoundId
-                })
-
-                field = value
             }
 
         internal var lowSoundStreamId: Int? = null
@@ -80,22 +83,24 @@ class SoundCompositionSimple (
 
         override fun onAttach(entity: Entity): Boolean {
             this.entity = entity
-            this.composition._unattachedComponents.update { x -> x - 1 }
+            this.composition.attachComponent(this)
             return true
         }
 
+        // Note! The current implementation relies on all sounds being played at once.
+        // Thus, sound components may never be reattached after detachment.
         override fun onDetach(entity: Entity) {
-            // todo - currently would not be robust to detachment
-            this.composition._unattachedComponents.update { x -> x + 1 }
             stop()
+            this.composition.detachComponent(this)
             this.entity = null
         }
     }
 
     private fun playSound(component: SoundCompositionComponent) {
         synchronized(this) {
+            initializeSounds() // ensure sounds are initialized
             component.isPlaying = true
-            if (this.isPlaying) {
+            if (this._state.value == State.PLAYING) {
                 this.soundPoolManager.setVolume(component.activeSoundStreamId, 1.0f)
             }
         }
@@ -103,6 +108,7 @@ class SoundCompositionSimple (
 
     private fun stopSound(component: SoundCompositionComponent) {
         synchronized(this) {
+            initializeSounds() // ensure sounds are initialized
             component.isPlaying = false
             this.soundPoolManager.setVolume(component.activeSoundStreamId, 0.0f)
         }
@@ -110,24 +116,45 @@ class SoundCompositionSimple (
 
     private fun replaceSound(component: SoundCompositionComponent, newSoundStreamId: Int?) {
         synchronized(this) {
+            initializeSounds() // ensure sounds are initialized
             this.soundPoolManager.setVolume(component.activeSoundStreamId, 0.0f)
-            if (newSoundStreamId != null) {
-                this.soundPoolManager.setVolume(newSoundStreamId, if (component.isPlaying && this.isPlaying) 1.0f else 0.0f)
+            if (newSoundStreamId != null && this._state.value == State.PLAYING) {
+                this.soundPoolManager.setVolume(newSoundStreamId, if (component.isPlaying) 1.0f else 0.0f)
             }
+        }
+    }
+
+    private fun attachComponent(component: SoundCompositionComponent) {
+        synchronized(this) {
+            this.unattachedComponents.remove(component)
+            if (this.unattachedComponents.isEmpty() && this._state.value == State.LOADING) {
+                this._state.value = State.READY
+            }
+        }
+    }
+
+    private fun detachComponent(component: SoundCompositionComponent) {
+        synchronized(this) {
+            // currently when a component is detached, we just forget about it.
+            // components can not be reattached once detached
+            this.unattachedComponents.remove(component)
+            this.compositionComponents.remove(component)
         }
     }
 
     fun addComponent(lowSoundId: Int, mediumSoundId: Int, highSoundId: Int,
                      defaultSoundType: SoundSampleType = SoundSampleType.MEDIUM): SoundCompositionComponent {
         synchronized(this) {
-            if (this.isPlaying || this.soundsInitialized) {
+            if (this.state.value >= State.PLAYING) {
                 throw IllegalStateException("Tried to add an component after play() was called.")
             }
+
+            this._state.value = State.LOADING
 
             val component = SoundCompositionComponent(
                 this, lowSoundId, mediumSoundId, highSoundId, defaultSoundType)
 
-            this._unattachedComponents.update { x -> x + 1 }
+            this.unattachedComponents.add(component)
             this.compositionComponents.add(component)
 
             return component
@@ -147,7 +174,7 @@ class SoundCompositionSimple (
                 throw IllegalStateException("Tried to initialize sound on a component that was not attached to an entity.")
             }
 
-            val lowVolume = if (isPlaying && compositionComponent.isPlaying &&
+            val lowVolume = if (this._state.value == State.PLAYING && compositionComponent.isPlaying &&
                 compositionComponent.soundType == SoundSampleType.LOW) 1.0f else 0.0f
             compositionComponent.lowSoundStreamId = checkNotNull(soundPoolManager.playSound(
                 session,
@@ -157,7 +184,7 @@ class SoundCompositionSimple (
                 loop = true))
             soundPoolManager.setVolume(compositionComponent.lowSoundStreamId!!, lowVolume)
 
-            val mediumVolume = if (isPlaying && compositionComponent.isPlaying &&
+            val mediumVolume = if (this._state.value == State.PLAYING && compositionComponent.isPlaying &&
                 compositionComponent.soundType == SoundSampleType.MEDIUM) 1.0f else 0.0f
             compositionComponent.mediumSoundStreamId = checkNotNull(soundPoolManager.playSound(
                 session,
@@ -167,7 +194,7 @@ class SoundCompositionSimple (
                 loop = true))
             soundPoolManager.setVolume(compositionComponent.mediumSoundStreamId!!, mediumVolume)
 
-            val highVolume = if (isPlaying && compositionComponent.isPlaying &&
+            val highVolume = if (this._state.value == State.PLAYING && compositionComponent.isPlaying &&
                 compositionComponent.soundType == SoundSampleType.HIGH) 1.0f else 0.0f
             compositionComponent.highSoundStreamId = checkNotNull(soundPoolManager.playSound(
                 session,
@@ -183,11 +210,11 @@ class SoundCompositionSimple (
 
     fun play() {
         synchronized(this) {
-            if (this.isPlaying) {
+            if (this._state.value != State.READY && this._state.value != State.STOPPED) {
                 return
             }
 
-            this.isPlaying = true
+            this._state.value = State.PLAYING
 
             if (!this.soundsInitialized) {
                 initializeSounds()
@@ -197,7 +224,7 @@ class SoundCompositionSimple (
             for (compositionComponent in compositionComponents) {
                 this.soundPoolManager.setVolume(
                     compositionComponent.activeSoundStreamId,
-                    if (this.isPlaying && compositionComponent.isPlaying) 1.0f else 0.0f
+                    if (compositionComponent.isPlaying) 1.0f else 0.0f
                 )
             }
         }
@@ -209,11 +236,11 @@ class SoundCompositionSimple (
 
     fun stop() {
         synchronized(this) {
-            if (!this.isPlaying) {
+            if (this._state.value != State.PLAYING) {
                 return
             }
 
-            this.isPlaying = false
+            this._state.value = State.STOPPED
 
             for (compositionComponent in this.compositionComponents) {
                 this.soundPoolManager.setVolume(compositionComponent.activeSoundStreamId, 0.0f)

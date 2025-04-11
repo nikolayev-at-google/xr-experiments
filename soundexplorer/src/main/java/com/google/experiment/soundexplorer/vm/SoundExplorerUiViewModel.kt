@@ -11,9 +11,8 @@ import androidx.xr.scenecore.GltfModel
 import androidx.xr.scenecore.Model
 import androidx.xr.scenecore.Session
 import com.google.experiment.soundexplorer.core.GlbModel
-import com.google.experiment.soundexplorer.sound.SoundComponents
 import com.google.experiment.soundexplorer.sound.SoundCompositionSimple
-import com.google.experiment.soundexplorer.sound.SoundPoolManager
+import com.google.experiment.soundexplorer.sound.SoundExplorerSoundPool
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,38 +32,39 @@ class SoundExplorerUiViewModel @Inject constructor() : ViewModel() {
     private val _modelsMap = MutableStateFlow<Map<GlbModel, GltfModel?>>(mutableMapOf())
     val modelsMap: StateFlow<Map<GlbModel, GltfModel?>> = _modelsMap.asStateFlow()
 
-    private val _soundComponentsReady = MutableStateFlow<Boolean>(false)
-    val soundComponentsReady: StateFlow<Boolean> = _soundComponentsReady.asStateFlow()
+    private val _soundComponentsInitialized = MutableStateFlow<Boolean>(false)
+    private var _soundPool: SoundExplorerSoundPool? = null
+    private var _soundComposition: SoundCompositionSimple? = null
 
-    public val _soundPoolManager = SoundPoolManager()
-    private var _composition: SoundCompositionSimple? = null
-    private var _soundComponents: SoundComponents? = null
+    val soundComponentsInitialized: StateFlow<Boolean> = _soundComponentsInitialized.asStateFlow()
 
-    val soundComponents: SoundComponents
-        get() {
-            return checkNotNull(_soundComponents)
-        }
+    val soundPool: SoundExplorerSoundPool
+        get() { return checkNotNull(_soundPool) }
 
     val soundComposition: SoundCompositionSimple
-        get() {
-            return checkNotNull(_composition)
-        }
+        get() { return checkNotNull(_soundComposition) }
 
     companion object {
         private const val TAG = "SoundExplorerViewModel"
     }
 
+    fun initializeSoundComponents(session: Session) {
+        if (this._soundComponentsInitialized.value) {
+            return
+        }
+
+        this._soundPool = SoundExplorerSoundPool(session.activity)
+        this._soundComposition = SoundCompositionSimple(this.soundPool.manager, session)
+
+        this._soundComponentsInitialized.value = true
+    }
+
     // val models:
 
-    fun initialize(session : Session) { // , glbModel: GlbModel) {
-        _composition = SoundCompositionSimple(_soundPoolManager, session)
-        _soundComponents = SoundComponents(session.activity, _soundPoolManager, _composition!!)
-
+    fun initialize(session : Session, glbModel: GlbModel) {
         viewModelScope.launch {
-            // val shape = GltfModel.create(session, glbModel.assetName).await()
-            // _modelsMap.value = _modelsMap.value.plus(Pair(glbModel, shape))
-            _soundComponents!!.initialize()
-            _soundComponentsReady.value = true
+            val shape = GltfModel.create(session, glbModel.assetName).await()
+            _modelsMap.value = _modelsMap.value.plus(Pair(glbModel, shape))
         }
     }
 
