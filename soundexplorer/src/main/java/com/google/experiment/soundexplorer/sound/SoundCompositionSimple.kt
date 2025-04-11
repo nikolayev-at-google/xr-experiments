@@ -12,10 +12,10 @@ class SoundCompositionSimple (
     val session: Session) {
 
     enum class State {
-        LOADING,    // object has been instantiated, but sounds are still loading or there are unattached components
-        READY,      // all known sounds have been loaded and components have been initialized
-        PLAYING,
-        STOPPED
+        LOADING,    // object has been instantiated, but there are unattached components
+        READY,      // components have been initialized
+        PLAYING,    // playing
+        STOPPED     // stopped
     }
 
     private val _state = MutableStateFlow<State>(State.LOADING)
@@ -125,11 +125,19 @@ class SoundCompositionSimple (
     }
 
     private fun attachComponent(component: SoundCompositionComponent) {
+        var transitionedToReady: Boolean = false
+
         synchronized(this) {
             this.unattachedComponents.remove(component)
             if (this.unattachedComponents.isEmpty() && this._state.value == State.LOADING) {
                 this._state.value = State.READY
+                transitionedToReady = true
             }
+        }
+
+        if (transitionedToReady) {
+            // by default, we want to have the composition play
+            this.play()
         }
     }
 
@@ -180,9 +188,8 @@ class SoundCompositionSimple (
                 session,
                 entity,
                 compositionComponent.lowSoundId,
-                volume = 1.0f,
+                volume = lowVolume,
                 loop = true))
-            soundPoolManager.setVolume(compositionComponent.lowSoundStreamId!!, lowVolume)
 
             val mediumVolume = if (this._state.value == State.PLAYING && compositionComponent.isPlaying &&
                 compositionComponent.soundType == SoundSampleType.MEDIUM) 1.0f else 0.0f
@@ -190,9 +197,8 @@ class SoundCompositionSimple (
                 session,
                 entity,
                 compositionComponent.mediumSoundId,
-                volume = 1.0f,
+                volume = mediumVolume,
                 loop = true))
-            soundPoolManager.setVolume(compositionComponent.mediumSoundStreamId!!, mediumVolume)
 
             val highVolume = if (this._state.value == State.PLAYING && compositionComponent.isPlaying &&
                 compositionComponent.soundType == SoundSampleType.HIGH) 1.0f else 0.0f
@@ -200,9 +206,8 @@ class SoundCompositionSimple (
                 session,
                 entity,
                 compositionComponent.highSoundId,
-                volume = 1.0f,
+                volume = highVolume,
                 loop = true))
-            soundPoolManager.setVolume(compositionComponent.highSoundStreamId!!, highVolume)
         }
 
         this.soundsInitialized = true

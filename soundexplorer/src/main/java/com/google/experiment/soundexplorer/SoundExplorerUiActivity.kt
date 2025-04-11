@@ -73,11 +73,8 @@ import androidx.xr.runtime.math.Vector3
 import androidx.xr.scenecore.MovableComponent
 import com.google.experiment.soundexplorer.core.GlbModel
 import com.google.experiment.soundexplorer.core.GlbModelRepository
-<<<<<<< HEAD
 import com.google.experiment.soundexplorer.sample.SoundExplorerViewModel
 import com.google.experiment.soundexplorer.sound.SoundCompositionSimple
-=======
->>>>>>> 98bc03c (cleanup, some bug)
 import com.google.experiment.soundexplorer.sound.SoundCompositionSimple.SoundSampleType
 import com.google.experiment.soundexplorer.vm.SoundExplorerUiViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -94,6 +91,8 @@ class SoundExplorerUiActivity : ComponentActivity() {
     }
 
     private val viewModel : SoundExplorerUiViewModel by viewModels()
+
+    private var soundComponents: Array<SoundCompositionSimple.SoundCompositionComponent>? = null
 
     @Inject
     lateinit var modelRepository : GlbModelRepository
@@ -122,25 +121,48 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 return@setContent
             }
 
-            this.viewModel.initializeSoundComponents(session)
+            this.viewModel.initializeSoundComposition(session)
 
             val soundsLoaded = this.viewModel.soundPool.soundsLoaded.collectAsState()
             if (!soundsLoaded.value) { // do something while sounds are loading?
                 return@setContent
             }
 
-            Subspace { MainMenu() } }
+            if (soundComponents == null) {
+                soundComponents = arrayOf(
+                    viewModel.soundComposition.addComponent(
+                        viewModel.soundPool.inst01lowId, viewModel.soundPool.inst01midId, viewModel.soundPool.inst01highId),
+                    viewModel.soundComposition.addComponent(
+                        viewModel.soundPool.inst02lowId, viewModel.soundPool.inst02midId, viewModel.soundPool.inst02highId),
+                    viewModel.soundComposition.addComponent(
+                        viewModel.soundPool.inst03lowId, viewModel.soundPool.inst03midId, viewModel.soundPool.inst03highId),
+                    viewModel.soundComposition.addComponent(
+                        viewModel.soundPool.inst04lowId, viewModel.soundPool.inst04midId, viewModel.soundPool.inst04highId),
+                    viewModel.soundComposition.addComponent(
+                        viewModel.soundPool.inst05lowId, viewModel.soundPool.inst05midId, viewModel.soundPool.inst05highId),
+                    viewModel.soundComposition.addComponent(
+                        viewModel.soundPool.inst06lowId, viewModel.soundPool.inst06midId, viewModel.soundPool.inst06highId),
+                    viewModel.soundComposition.addComponent(
+                        viewModel.soundPool.inst07lowId, viewModel.soundPool.inst07midId, viewModel.soundPool.inst07highId),
+                    viewModel.soundComposition.addComponent(
+                        viewModel.soundPool.inst08lowId, viewModel.soundPool.inst08midId, viewModel.soundPool.inst08highId),
+                    viewModel.soundComposition.addComponent(
+                        viewModel.soundPool.inst09lowId, viewModel.soundPool.inst09midId, viewModel.soundPool.inst09highId))
+            }
+
+            Subspace { MainMenu(checkNotNull(soundComponents)) } }
     }
 
     @Composable
-    fun MainMenu(viewModel: SoundExplorerUiViewModel = viewModel()) {
+    fun MainMenu(soundComponents: Array<SoundCompositionSimple.SoundCompositionComponent>,
+                 viewModel: SoundExplorerUiViewModel = viewModel()) {
             SpatialBox(
                 modifier = SubspaceModifier.width(600.dp).height(600.dp),
                 alignment = SpatialAlignment.BottomCenter,
             ) {
                 val isOpen = viewModel.addShapeMenuOpen.collectAsState()
                 if (isOpen.value)
-                    ShapeMenu()
+                    ShapeMenu(soundComponents)
                 SpatialPanel(
                     modifier = SubspaceModifier
                         .width(600.dp)
@@ -153,7 +175,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
     }
 
     @Composable
-    fun ShapeMenu() {
+    fun ShapeMenu(soundComponents: Array<SoundCompositionSimple.SoundCompositionComponent>) {
         SpatialRow(SubspaceModifier.testTag("ShapeGrid")) {
             val columnPanelModifier = SubspaceModifier.size(150.dp).padding(20.dp)
             SpatialColumn {
@@ -161,19 +183,19 @@ class SoundExplorerUiActivity : ComponentActivity() {
                     modifier = columnPanelModifier.testTag("02_static"),
                     glbFileName = "glb2/02_static.glb",
                     glbModel = GlbModel.GlbModel01Anim,
-                    viewModel.soundPool.inst01lowId, viewModel.soundPool.inst01midId, viewModel.soundPool.inst01highId
+                    soundComponents[0]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("05_static"),
                     glbFileName = "glb2/05_static.glb",
                     glbModel = GlbModel.GlbModel02Anim,
-                    viewModel.soundPool.inst02lowId, viewModel.soundPool.inst02midId, viewModel.soundPool.inst02highId
+                    soundComponents[1]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("08_static"),
                     glbFileName = "glb2/08_static.glb",
                     glbModel = GlbModel.GlbModel03Anim,
-                    viewModel.soundPool.inst03lowId, viewModel.soundPool.inst03midId, viewModel.soundPool.inst03highId
+                    soundComponents[2]
                 )
             }
             SpatialColumn {
@@ -181,19 +203,19 @@ class SoundExplorerUiActivity : ComponentActivity() {
                     modifier = columnPanelModifier.testTag("10_static"),
                     glbFileName = "glb2/10_static.glb",
                     glbModel = GlbModel.GlbModel04Anim,
-                    viewModel.soundPool.inst04lowId, viewModel.soundPool.inst04midId, viewModel.soundPool.inst04highId
+                    soundComponents[3]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("11_static"),
                     glbFileName = "glb2/11_static.glb",
                     glbModel = GlbModel.GlbModel05Anim,
-                    viewModel.soundPool.inst05lowId, viewModel.soundPool.inst05midId, viewModel.soundPool.inst05highId
+                    soundComponents[4]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("16_static"),
                     glbFileName = "glb2/16_static.glb",
                     glbModel = GlbModel.GlbModel06Anim,
-                    viewModel.soundPool.inst06lowId, viewModel.soundPool.inst06midId, viewModel.soundPool.inst06highId
+                    soundComponents[5]
                 )
             }
             SpatialColumn {
@@ -201,19 +223,19 @@ class SoundExplorerUiActivity : ComponentActivity() {
                     modifier = columnPanelModifier.testTag("18_static"),
                     glbFileName = "glb2/18_static.glb",
                     glbModel = GlbModel.GlbModel07Anim,
-                    viewModel.soundPool.inst07lowId, viewModel.soundPool.inst07midId, viewModel.soundPool.inst07highId
+                    soundComponents[6]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
                     glbFileName = "glb2/01_animated.glb",
                     glbModel = GlbModel.GlbModel08Anim,
-                    viewModel.soundPool.inst08lowId, viewModel.soundPool.inst08midId, viewModel.soundPool.inst08highId
+                    soundComponents[7]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
                     glbFileName = "glb2/01_animated.glb",
                     glbModel = GlbModel.GlbModel09Anim,
-                    viewModel.soundPool.inst09lowId, viewModel.soundPool.inst09midId, viewModel.soundPool.inst09highId
+                    soundComponents[8]
                 )
             }
         }
@@ -225,7 +247,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
         modifier: SubspaceModifier = SubspaceModifier,
         glbFileName: String = "glb2/01_animated.glb",
         glbModel : GlbModel = GlbModel.GlbModel01,
-        lowSoundId: Int, mediumSoundId: Int, highSoundId: Int
+        soundComponent: SoundCompositionSimple.SoundCompositionComponent
     ) {
         SpatialPanel(modifier = modifier.movable(
             onPoseChange = { poseEvent ->
@@ -234,7 +256,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 true
             }
         )) {
-            PanelContent(glbFileName = glbFileName, glbModel = glbModel, lowSoundId, mediumSoundId, highSoundId)
+            PanelContent(glbFileName = glbFileName, glbModel = glbModel, soundComponent)
         }
     }
 
@@ -243,7 +265,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
     fun PanelContent(
         glbFileName: String,
         glbModel : GlbModel = GlbModel.GlbModel01,
-        lowSoundId: Int, mediumSoundId: Int, highSoundId: Int
+        soundComponent: SoundCompositionSimple.SoundCompositionComponent
     ) {
 
         val infiniteTransition = rememberInfiniteTransition()
@@ -319,7 +341,6 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 // calculate time to execute commad to load model
                 val startTime = System.currentTimeMillis()
                 val gltfModelEntity = GltfModelEntity.create(session, it)
-                val soundComponent = viewModel.soundComposition.addComponent(lowSoundId, mediumSoundId, highSoundId)
                 gltfModelEntity.addComponent(soundComponent)
                 gltfModelEntity.apply {
                     addComponent(

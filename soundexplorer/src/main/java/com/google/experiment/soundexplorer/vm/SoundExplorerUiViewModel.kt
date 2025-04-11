@@ -48,7 +48,7 @@ class SoundExplorerUiViewModel @Inject constructor() : ViewModel() {
         private const val TAG = "SoundExplorerViewModel"
     }
 
-    fun initializeSoundComponents(session: Session) {
+    fun initializeSoundComposition(session: Session) {
         if (this._soundComponentsInitialized.value) {
             return
         }

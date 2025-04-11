@@ -44,7 +44,7 @@ class SoundPoolManager (maxStreams: Int) {
     }
 
     fun loadSound(applicationContext: Context, soundSampleAssetPath: String): Int? {
-        if (this.soundsLoading.incrementAndGet() == 1) {
+        if (this.soundsLoading.incrementAndGet() == 1) { // bounce off 0 is unlikely since all sounds loaded in ctor, but possible
             this._soundsLoaded.value = false
         }
 
