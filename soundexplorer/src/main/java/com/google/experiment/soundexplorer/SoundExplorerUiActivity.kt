@@ -65,6 +65,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.xr.compose.spatial.Orbiter
 import androidx.xr.compose.spatial.OrbiterEdge
+import androidx.xr.compose.subspace.layout.alpha
 import androidx.xr.compose.subspace.layout.height
 import androidx.xr.compose.subspace.layout.resizable
 import androidx.xr.compose.subspace.layout.rotate
@@ -236,7 +237,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
             onPoseChange = { poseEvent ->
                 Log.d(TAG, "onPoseChange: $poseEvent")
                 viewModel.onModelPoseChange(glbModel, poseEvent)
-                true
+                false
             }
         )) {
             PanelContent(glbFileName = glbFileName, glbModel = glbModel, soundComponent = soundComponent)
@@ -384,7 +385,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
             if (gltfEntity != null) {
                 Subspace {
                     Volume(
-                        modifier = SubspaceModifier.rotate(axisAngle, rotationValue)
+                        modifier = SubspaceModifier.rotate(axisAngle, rotationValue).alpha(0.1f)
                     ) {
                         gltfEntity.setParent(it)
                     }
