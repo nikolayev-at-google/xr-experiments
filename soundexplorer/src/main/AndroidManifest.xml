@@ -45,7 +45,7 @@
             android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
             android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED" />
 
-        <activity android:name=".SoundExplorerUiActivity"
+        <activity android:name=".ui.Main14Activity"
             android:exported="true"
             android:theme="@style/Theme.XRExperiments">
             <intent-filter>
