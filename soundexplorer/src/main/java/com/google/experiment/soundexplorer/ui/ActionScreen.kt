@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.google.experiment.soundexplorer.R
+import com.google.experiment.soundexplorer.sound.SoundCompositionSimple
 import com.google.experiment.soundexplorer.vm.SoundExplorerUiViewModel
 
 
@@ -57,8 +58,7 @@ fun ActionScreen(
             }, // Lambda to update state
             showDebugMenu = showDebug, // Pass state down
             onShowDebugMenuChange = { showDebug = it }, // Lambda to update state
-            onAddShapeClick = { viewModel.onAddShapeClick() },
-            onPlayClick = { viewModel.onPlayClick() }
+            onAddShapeClick = { viewModel.onAddShapeClick() }
         )
     }
 }
@@ -74,7 +74,6 @@ fun BottomActions(
     showMenu: Boolean, // Receive state
     onShowMenuChange: (Boolean) -> Unit, // Receive lambda to update state
     onAddShapeClick: () -> Unit,
-    onPlayClick: () -> Unit,
     viewModel: SoundExplorerUiViewModel = viewModel()
 ) {
     Box(
@@ -206,21 +205,77 @@ fun BottomActions(
             Spacer(modifier = Modifier.width(28.dp))
 
             // --- Play Button ---
-            IconButton(
-                onClick = onPlayClick,
-                modifier = Modifier
-                    .size(96.dp)
-                    // Same style as Menu button
-                    .background(Color(0xFFC2E7FF),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_play),
-                    contentDescription = "Play",
-                    tint = Color(0xFF004A77) // Icon color
-                )
+            when (viewModel.soundComposition.state.collectAsState().value) {
+                SoundCompositionSimple.State.LOADING -> {
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier
+                            .size(96.dp)
+                            // Same style as Menu button
+                            .background(Color(0xFFC2E7FF),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_play), // (disabled)
+                            contentDescription = "Play",
+                            tint = Color(0xFF004A77) // Icon color
+                        )
+                    }
+                }
+                SoundCompositionSimple.State.READY -> {
+                    IconButton(
+                        onClick = { viewModel.soundComposition.play() },
+                        modifier = Modifier
+                            .size(96.dp)
+                            // Same style as Menu button
+                            .background(Color(0xFFC2E7FF),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_play),
+                            contentDescription = "Play",
+                            tint = Color(0xFF004A77) // Icon color
+                        )
+                    }
+                }
+                SoundCompositionSimple.State.PLAYING -> {
+                    IconButton(
+                        onClick = { viewModel.soundComposition.stop() },
+                        modifier = Modifier
+                            .size(96.dp)
+                            // Same style as Menu button
+                            .background(Color(0xFFC2E7FF),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_cross), // todo - should be a stop or pause icon
+                            contentDescription = "Play",
+                            tint = Color(0xFF004A77) // Icon color
+                        )
+                    }
+                }
+                SoundCompositionSimple.State.STOPPED -> {
+                    IconButton(
+                        onClick = { viewModel.soundComposition.play() },
+                        modifier = Modifier
+                            .size(96.dp)
+                            // Same style as Menu button
+                            .background(Color(0xFFC2E7FF),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_play),
+                            contentDescription = "Play",
+                            tint = Color(0xFF004A77) // Icon color
+                        )
+                    }
+                }
             }
+
         }
 
         if (showDebugMenu)
@@ -352,8 +407,7 @@ fun ActionScreenMenuOpenPreview() {
             onShowMenuChange = { showMenu = it },
             showDebugMenu = showDebugMenu,
             onShowDebugMenuChange = { showDebugMenu = it },
-            onAddShapeClick = { },
-            onPlayClick = { }
+            onAddShapeClick = { }
         )
     }
 }
