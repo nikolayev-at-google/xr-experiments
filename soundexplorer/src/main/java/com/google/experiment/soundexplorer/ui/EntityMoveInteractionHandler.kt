@@ -1,8 +1,6 @@
 package com.google.experiment.soundexplorer.ui
 
-import android.util.Log
 import androidx.xr.runtime.math.Pose
-import androidx.xr.runtime.math.Quaternion
 import androidx.xr.runtime.math.Vector3
 import androidx.xr.scenecore.Entity
 import androidx.xr.scenecore.InputEvent
@@ -11,20 +9,22 @@ import kotlin.math.abs
 
 class EntityMoveInteractionHandler(
     val entity: Entity,
+    val linearAcceleration: Float,
     val deadZone: Float = 0.0f,
-    val onTap: InputEventListener? = null
+    val onInputEventBubble: InputEventListener? = null
 ) : InputEventListener {
 
     private val EPSILON = 0.001f
 
     data class InteractionData(
-        // val initialRayOrigin: Vector3,
-        // val initialRayDirection: Vector3,
         val initialHitPoint: Vector3,
-        // val initialEntityRotation: Quaternion,
         val initialHitDistance: Float,
         val initialHitOffsetFromObjOrigin: Vector3,
-        var performedMove: Boolean
+        val timeStartNs: Long,
+
+        var lastUpdateTimeNs: Long = timeStartNs,
+        var currentLinearVelocity: Double = 0.0,
+        var performedMove: Boolean = false
     )
 
     private var currentInteraction: InteractionData? = null
@@ -45,7 +45,6 @@ class EntityMoveInteractionHandler(
 
         if (inputEvent.action == InputEvent.ACTION_DOWN) {
             // inputEvent.hitInfo info doesn't appear to be available yet, so for now construct a plane to approximate the initial ray hit location
-
             val interactionPlaneP = entity.getPose().translation
             val interactionPlaneN = -inputEvent.direction.toNormalized()
 
@@ -55,21 +54,19 @@ class EntityMoveInteractionHandler(
             }
 
             this.currentInteraction = InteractionData(
-                // inputEvent.origin,
-                // inputEvent.direction,
-                hitPoint,
-                // entity.getPose().rotation,
-                (hitPoint - inputEvent.origin).length,
-                hitPoint - interactionPlaneP,
-                false)
+                initialHitPoint = hitPoint,
+                initialHitDistance = (hitPoint - inputEvent.origin).length,
+                initialHitOffsetFromObjOrigin = hitPoint - interactionPlaneP,
+                timeStartNs = System.nanoTime())
 
         } else if (inputEvent.action == InputEvent.ACTION_UP) {
             val ci = this.currentInteraction
             if (ci == null || !ci.performedMove) {
                 // bubble the event as a tap if it wasn't handled
-                this.onTap?.onInputEvent(inputEvent)
+                this.onInputEventBubble?.onInputEvent(inputEvent)
             }
             this.currentInteraction = null
+
         } else if (inputEvent.action == InputEvent.ACTION_MOVE) {
             val ci = this.currentInteraction
             if (ci == null) {
@@ -78,15 +75,57 @@ class EntityMoveInteractionHandler(
 
             val targetPosition = (inputEvent.direction.toNormalized() * ci.initialHitDistance) + inputEvent.origin
 
-            val distance = (targetPosition - ci.initialHitPoint).length
-
-            if (distance > deadZone) {
-                this.currentInteraction?.performedMove = true
-                this.entity.setPose(Pose(targetPosition - ci.initialHitOffsetFromObjOrigin, this.entity.getPose().rotation))
+            if (!ci.performedMove &&
+                (((targetPosition - ci.initialHitPoint).lengthSquared) < (deadZone * deadZone))) {
+                return
             }
 
-            // val currentPosition = this.entity.getPose().translation
+            this.currentInteraction?.performedMove = true
 
+            val currentTimeNs = System.nanoTime()
+            val deltaTimeNs = (currentTimeNs - ci.lastUpdateTimeNs)
+            val deltaTimeS = deltaTimeNs.toDouble() * 0.000000001
+
+            this.currentInteraction?.lastUpdateTimeNs = currentTimeNs
+
+            // todo- consider accounting for rotation
+
+            val targetEntityPosition = targetPosition - ci.initialHitOffsetFromObjOrigin
+            val displacementToGoal = targetEntityPosition - this.entity.getPose().translation
+
+            if (displacementToGoal.lengthSquared < EPSILON) {
+                return
+            }
+
+            val distanceToStop = (ci.currentLinearVelocity * ci.currentLinearVelocity) / (2.0f * linearAcceleration)
+            val distanceToGoal = displacementToGoal.length
+
+            val linearAccel: Double =
+                if (distanceToStop >= distanceToGoal) {
+                    // need to slow down
+                    -(ci.currentLinearVelocity * ci.currentLinearVelocity) / (2.0f * distanceToGoal)
+                } else {
+                    // ok to speed up
+                    linearAcceleration.toDouble()
+                }
+
+            val linearVel = ci.currentLinearVelocity + (linearAccel * deltaTimeS)
+            val linearDisplacement = linearVel * deltaTimeS
+
+            if (abs(linearDisplacement) >= distanceToGoal) {
+                this.entity.setPose(Pose(targetEntityPosition, this.entity.getPose().rotation))
+                this.currentInteraction?.currentLinearVelocity = 0.0
+                return
+            }
+
+            val entityPosition = this.entity.getPose().translation +
+                    (displacementToGoal.toNormalized() * linearDisplacement.toFloat())
+            this.currentInteraction?.currentLinearVelocity = linearVel
+
+            this.entity.setPose(Pose(entityPosition, this.entity.getPose().rotation))
+
+        } else {
+            this.onInputEventBubble?.onInputEvent(inputEvent)
         }
     }
 }

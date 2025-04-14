@@ -367,8 +367,9 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 gltfModelEntity.addComponent(InteractableComponent.create(session, mainExecutor,
                     EntityMoveInteractionHandler(
                         gltfModelEntity,
+                        linearAcceleration = 3.0f,
                         deadZone = 0.02f,
-                        onTap = tapHandler)))
+                        onInputEventBubble = tapHandler)))
                 gltfModelEntity.addComponent(InteractableComponent.create(session, mainExecutor,
                     SoundEntityMovementHandler(
                         gltfModelEntity,
