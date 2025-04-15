@@ -101,7 +101,11 @@ class Main14Activity : ComponentActivity() {
 
     private fun createHeadLockedPanelUi() {
         val headLockedPanelView = createPanelView(this) {
-            SpatialPanel { MainScreen(modelRepository) }
+//            Subspace { MainScreen(modelRepository) }
+            SpatialPanel {
+                Toolbar({},{},{})
+            }
+
         }
         val headLockedPanel = createPanelUi(
             session = sceneCoreSession,

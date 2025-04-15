@@ -292,7 +292,7 @@ fun RestartDialog() {
 @Composable
 fun PanelContent(
     modelRepository : GlbModelRepository,
-    glbModel : GlbModel = GlbModel.GlbModel01,
+    glbModel : GlbModel = GlbModel.GlbModel01Static,
 ) {
 
     val infiniteTransition = rememberInfiniteTransition()
@@ -415,7 +415,7 @@ fun ModelsSpatialBoxRow(
                 }
             }
             LaunchedEffect(Unit) {
-                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel01).getOrNull() as GltfModel?
+                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel01Static).getOrNull() as GltfModel?
             }
             if (gltfEntity != null) {
                 Volume {
@@ -433,7 +433,7 @@ fun ModelsSpatialBoxRow(
                 }
             }
             LaunchedEffect(Unit) {
-                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel02).getOrNull() as GltfModel?
+                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel02Static).getOrNull() as GltfModel?
             }
             if (gltfEntity != null) {
                 Volume {
@@ -451,7 +451,7 @@ fun ModelsSpatialBoxRow(
                 }
             }
             LaunchedEffect(Unit) {
-                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel03).getOrNull() as GltfModel?
+                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel03Inactive).getOrNull() as GltfModel?
             }
             if (gltfEntity != null) {
                 Volume {
@@ -469,7 +469,7 @@ fun ModelsSpatialBoxRow(
                 }
             }
             LaunchedEffect(Unit) {
-                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel04).getOrNull() as GltfModel?
+                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel04Animated).getOrNull() as GltfModel?
             }
             if (gltfEntity != null) {
                 Volume {
@@ -487,7 +487,7 @@ fun ModelsSpatialBoxRow(
                 }
             }
             LaunchedEffect(Unit) {
-                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel05).getOrNull() as GltfModel?
+                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel05Inactive).getOrNull() as GltfModel?
             }
             if (gltfEntity != null) {
                 Volume {
@@ -505,7 +505,7 @@ fun ModelsSpatialBoxRow(
                 }
             }
             LaunchedEffect(Unit) {
-                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel06).getOrNull() as GltfModel?
+                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel06Static).getOrNull() as GltfModel?
             }
             if (gltfEntity != null) {
                 Volume {
@@ -523,7 +523,7 @@ fun ModelsSpatialBoxRow(
                 }
             }
             LaunchedEffect(Unit) {
-                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel07).getOrNull() as GltfModel?
+                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel07Inactive).getOrNull() as GltfModel?
             }
             if (gltfEntity != null) {
                 Volume {
@@ -541,7 +541,7 @@ fun ModelsSpatialBoxRow(
                 }
             }
             LaunchedEffect(Unit) {
-                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel08).getOrNull() as GltfModel?
+                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel08Animated).getOrNull() as GltfModel?
             }
             if (gltfEntity != null) {
                 Volume {
@@ -559,7 +559,7 @@ fun ModelsSpatialBoxRow(
                 }
             }
             LaunchedEffect(Unit) {
-                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel09).getOrNull() as GltfModel?
+                shape = modelRepository.getOrLoadModel(GlbModel.GlbModel09Inactive).getOrNull() as GltfModel?
             }
             if (gltfEntity != null) {
                 Volume {
@@ -583,7 +583,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel01)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel01Animated)
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -594,7 +594,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel02)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel02Animated)
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -605,7 +605,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel03)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel03Animated)
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -616,7 +616,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel04)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel04Animated)
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -627,7 +627,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel05)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel05Animated)
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -638,7 +638,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel06)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel06Animated)
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -649,7 +649,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel07)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel07Animated)
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -660,7 +660,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel08)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel08Animated)
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -671,7 +671,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel09)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel09Animated)
             }
         }
     }

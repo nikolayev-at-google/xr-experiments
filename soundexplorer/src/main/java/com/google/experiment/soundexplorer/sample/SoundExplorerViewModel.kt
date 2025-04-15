@@ -31,7 +31,7 @@ class SoundExplorerViewModel(
     val loadingState: StateFlow<AllModelsLoadingState> = _loadingState.asStateFlow()
 
     // List of models to load remains the same
-    private val requiredModelIdentifiers = GlbModel.allGlbModels
+    private val requiredModelIdentifiers = GlbModel.allGlbStaticModels
 
     // Flag to prevent multiple load triggers
     private var loadingTriggered = false

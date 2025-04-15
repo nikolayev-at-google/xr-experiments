@@ -183,19 +183,19 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 AppPanel(
                     modifier = columnPanelModifier.testTag("02_static"),
                     glbFileName = "glb2/02_static.glb",
-                    glbModel = GlbModel.GlbModel01Anim,
+                    glbModel = GlbModel.GlbModel01Animated,
                     soundComponents[0]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("05_static"),
                     glbFileName = "glb2/05_static.glb",
-                    glbModel = GlbModel.GlbModel02Anim,
+                    glbModel = GlbModel.GlbModel02Animated,
                     soundComponents[1]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("08_static"),
                     glbFileName = "glb2/08_static.glb",
-                    glbModel = GlbModel.GlbModel03Anim,
+                    glbModel = GlbModel.GlbModel03Animated,
                     soundComponents[2]
                 )
             }
@@ -203,19 +203,19 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 AppPanel(
                     modifier = columnPanelModifier.testTag("10_static"),
                     glbFileName = "glb2/10_static.glb",
-                    glbModel = GlbModel.GlbModel04Anim,
+                    glbModel = GlbModel.GlbModel04Animated,
                     soundComponents[3]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("11_static"),
                     glbFileName = "glb2/11_static.glb",
-                    glbModel = GlbModel.GlbModel05Anim,
+                    glbModel = GlbModel.GlbModel05Animated,
                     soundComponents[4]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("16_static"),
                     glbFileName = "glb2/16_static.glb",
-                    glbModel = GlbModel.GlbModel06Anim,
+                    glbModel = GlbModel.GlbModel06Animated,
                     soundComponents[5]
                 )
             }
@@ -223,19 +223,19 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 AppPanel(
                     modifier = columnPanelModifier.testTag("18_static"),
                     glbFileName = "glb2/18_static.glb",
-                    glbModel = GlbModel.GlbModel07Anim,
+                    glbModel = GlbModel.GlbModel07Animated,
                     soundComponents[6]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
                     glbFileName = "glb2/01_animated.glb",
-                    glbModel = GlbModel.GlbModel08Anim,
+                    glbModel = GlbModel.GlbModel08Animated,
                     soundComponents[7]
                 )
                 AppPanel(
                     modifier = columnPanelModifier.testTag("01_animated"),
                     glbFileName = "glb2/01_animated.glb",
-                    glbModel = GlbModel.GlbModel09Anim,
+                    glbModel = GlbModel.GlbModel09Animated,
                     soundComponents[8]
                 )
             }
@@ -247,7 +247,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
     fun AppPanel(
         modifier: SubspaceModifier = SubspaceModifier,
         glbFileName: String = "glb2/01_animated.glb",
-        glbModel : GlbModel = GlbModel.GlbModel01,
+        glbModel : GlbModel = GlbModel.GlbModel01Static,
         soundComponent: SoundCompositionSimple.SoundCompositionComponent
     ) {
         SpatialPanel(modifier = modifier.movable(
@@ -265,7 +265,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
     @Composable
     fun PanelContent(
         glbFileName: String,
-        glbModel : GlbModel = GlbModel.GlbModel01,
+        glbModel : GlbModel = GlbModel.GlbModel01Static,
         soundComponent: SoundCompositionSimple.SoundCompositionComponent
     ) {
 
