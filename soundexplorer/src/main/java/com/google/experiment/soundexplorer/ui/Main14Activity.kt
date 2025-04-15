@@ -3,9 +3,11 @@ package com.google.experiment.soundexplorer.ui
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +16,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistryOwner
@@ -28,7 +31,9 @@ import androidx.xr.scenecore.PanelEntity
 import androidx.xr.scenecore.Session
 import com.google.experiment.soundexplorer.core.GlbModelRepository
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.getValue
 
 
 @AndroidEntryPoint
@@ -36,29 +41,43 @@ class Main14Activity : ComponentActivity() {
 
     @Inject
     lateinit var modelRepository : GlbModelRepository
+    private val viewModel : MainViewModel by viewModels()
 
     private val sceneCoreSession by lazy { Session.create(this) }
 
     private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
+    private lateinit var dialogPanel : PanelEntity
 
 
 
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        setContent {
-//            val session = LocalSession.current
-//            if (session == null) {
-//                return@setContent
-//            }
-//            Subspace {
-//                MainScreen(modelRepository)
+        setContent {
+            val session = LocalSession.current
+            if (session == null) {
+                return@setContent
+            }
+            Subspace {
+                MainScreen(modelRepository)
+            }
+        }
+
+//        sceneCoreSession.mainPanelEntity.setHidden(true)
+//
+//        createHeadLockedPanelUi()
+
+//        lifecycleScope.launch {
+//            viewModel.isModelsVisible.collect {
+//                Log.d("TAG", "onCreate: collect collect collect collect")
 //            }
 //        }
-
-        sceneCoreSession.mainPanelEntity.setHidden(true)
-
-        createHeadLockedPanelUi()
+//        lifecycleScope.launch {
+//            viewModel.isDialogVisible.collect {
+//                Log.d("TAG", "onCreate: collect collect collect collect")
+//                dialogPanel.setHidden(it)
+//            }
+//        }
     }
 
 
@@ -101,12 +120,11 @@ class Main14Activity : ComponentActivity() {
 
     private fun createHeadLockedPanelUi() {
         val headLockedPanelView = createPanelView(this) {
-//            Subspace { MainScreen(modelRepository) }
-//            SpatialPanel {
-                Toolbar({},{},{})
-//            }
-
-//            MainScreen(modelRepository)
+            Toolbar(
+                {viewModel.showDialog()},
+                {viewModel.showModels()},
+                {}
+            )
         }
         val headLockedPanel = createPanelUi(
             session = sceneCoreSession,
@@ -119,11 +137,28 @@ class Main14Activity : ComponentActivity() {
         headLockedPanelView.postOnAnimation {
             updateHeadLockedPose(headLockedPanelView, headLockedPanel)
         }
+
+//        createHeadLockedDialogUi(headLockedPanel)
+    }
+
+    private fun createHeadLockedDialogUi(headLockedPanel : PanelEntity) {
+        val dialogView = createPanelView(this) {
+            RestartDialogContent()
+        }
+        dialogPanel = createPanelUi(
+            session = sceneCoreSession,
+            view = dialogView,
+            surfaceDimensionsPx = Dimensions(1000f, 1000f),
+            dimensions = Dimensions(100f, 100f),
+            panelName = "dialogPanel",
+            pose = userForward
+        )
+//        dialogPanel.setParent(headLockedPanel)
+        dialogPanel.setHidden(true)
     }
 
     private fun updateHeadLockedPose(view: View, panelEntity: PanelEntity) {
         sceneCoreSession.spatialUser.head?.let { projectionSource ->
-
             projectionSource.transformPoseTo(userForward, sceneCoreSession.activitySpace).let {
                 panelEntity.setPose(it)
             }

@@ -216,73 +216,78 @@ fun RestartDialog() {
     SpatialPanel(
         modifier = SubspaceModifier.width(400.dp).height(240.dp)
     ) {
-        Card(
+        RestartDialogContent()
+    }
+}
+
+@Composable
+fun RestartDialogContent() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF2F2F2)
+        )
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFF2F2F2)
-            )
+                .padding(24.dp),
+            horizontalAlignment = Alignment.Start
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.Start
+            // Title
+            Text(
+                text = "Start Fresh?",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Description
+            Text(
+                text = "All shapes will be removed from your space. You can rebuild anytime.",
+                fontSize = 16.sp,
+                color = Color.DarkGray
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Buttons Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
             ) {
-                // Title
-                Text(
-                    text = "Start Fresh?",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Description
-                Text(
-                    text = "All shapes will be removed from your space. You can rebuild anytime.",
-                    fontSize = 16.sp,
-                    color = Color.DarkGray
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Buttons Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                // Delete Button
+                Button(
+                    onClick = {},
+                    modifier = Modifier.width(120.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF3C3C3C)
+                    ),
+                    shape = RoundedCornerShape(24.dp)
                 ) {
-                    // Delete Button
-                    Button(
-                        onClick = {},
-                        modifier = Modifier.width(120.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF3C3C3C)
-                        ),
-                        shape = RoundedCornerShape(24.dp)
-                    ) {
-                        Text(
-                            text = "Delete All",
-                            color = Color.White,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
-                    }
+                    Text(
+                        text = "Delete All",
+                        color = Color.White,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                }
 
-                    // Cancel Button (positioned to the right of Delete)
-                    TextButton(
-                        onClick = {  },
+                // Cancel Button (positioned to the right of Delete)
+                TextButton(
+                    onClick = {  },
 //                            modifier = Modifier
 //                                .padding(start = 160.dp)
-                    ) {
-                        Text(
-                            text = "Cancel",
-                            color = Color.DarkGray,
-                            fontSize = 16.sp
-                        )
-                    }
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = Color.DarkGray,
+                        fontSize = 16.sp
+                    )
                 }
             }
         }
