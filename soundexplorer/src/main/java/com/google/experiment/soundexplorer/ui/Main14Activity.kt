@@ -39,7 +39,7 @@ class Main14Activity : ComponentActivity() {
 
     private val sceneCoreSession by lazy { Session.create(this) }
 
-    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.3f, -0.8f, -1.5f)))
+    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
 
 
 
@@ -102,15 +102,16 @@ class Main14Activity : ComponentActivity() {
     private fun createHeadLockedPanelUi() {
         val headLockedPanelView = createPanelView(this) {
 //            Subspace { MainScreen(modelRepository) }
-            SpatialPanel {
+//            SpatialPanel {
                 Toolbar({},{},{})
-            }
+//            }
 
+//            MainScreen(modelRepository)
         }
         val headLockedPanel = createPanelUi(
             session = sceneCoreSession,
             view = headLockedPanelView,
-            surfaceDimensionsPx = Dimensions(1500f, 500f),
+            surfaceDimensionsPx = Dimensions(340f, 120f),
             dimensions = Dimensions(2f, 7f),
             panelName = "headLockedPanel",
             pose = userForward
