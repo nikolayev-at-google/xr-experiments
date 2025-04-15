@@ -11,7 +11,8 @@ class EntityMoveInteractionHandler(
     val entity: Entity,
     val linearAcceleration: Float,
     val deadZone: Float = 0.0f,
-    val onInputEventBubble: InputEventListener? = null
+    val onInputEventBubble: InputEventListener? = null,
+    val onMovementStarted: (() -> Unit)? = null
 ) : InputEventListener {
 
     private val EPSILON = 0.001f
@@ -75,12 +76,14 @@ class EntityMoveInteractionHandler(
 
             val targetPosition = (inputEvent.direction.toNormalized() * ci.initialHitDistance) + inputEvent.origin
 
-            if (!ci.performedMove &&
-                (((targetPosition - ci.initialHitPoint).lengthSquared) < (deadZone * deadZone))) {
-                return
-            }
+            if (!ci.performedMove) {
+                if ((targetPosition - ci.initialHitPoint).lengthSquared < (deadZone * deadZone)) {
+                    return
+                }
 
-            this.currentInteraction?.performedMove = true
+                this.currentInteraction?.performedMove = true
+                this.onMovementStarted?.invoke()
+            }
 
             val currentTimeNs = System.nanoTime()
             val deltaTimeNs = (currentTimeNs - ci.lastUpdateTimeNs)
