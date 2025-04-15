@@ -9,17 +9,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.google.experiment.soundexplorer.ui.ActionScreen
 import kotlin.getValue
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.UiComposable
 import androidx.compose.ui.unit.dp
-import androidx.concurrent.futures.await
 import androidx.xr.compose.platform.LocalSession
 import androidx.xr.compose.spatial.Subspace
 import androidx.xr.compose.subspace.SpatialBox
@@ -41,7 +37,6 @@ import androidx.xr.scenecore.GltfModelEntity
 import androidx.xr.scenecore.InputEvent
 import androidx.xr.scenecore.InteractableComponent
 import android.annotation.SuppressLint
-import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -51,32 +46,21 @@ import androidx.compose.animation.core.animateValue
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.xr.compose.spatial.Orbiter
-import androidx.xr.compose.spatial.OrbiterEdge
-import androidx.xr.compose.subspace.layout.alpha
 import androidx.xr.compose.subspace.layout.height
-import androidx.xr.compose.subspace.layout.resizable
-import androidx.xr.compose.subspace.layout.rotate
+import androidx.xr.runtime.math.Pose
 import androidx.xr.runtime.math.Quaternion
 import androidx.xr.runtime.math.Vector3
-import androidx.xr.scenecore.MovableComponent
+import androidx.xr.scenecore.Entity
+import androidx.xr.scenecore.InputEventListener
 import com.google.experiment.soundexplorer.core.GlbModel
 import com.google.experiment.soundexplorer.core.GlbModelRepository
-import com.google.experiment.soundexplorer.sample.SoundExplorerViewModel
-import com.google.experiment.soundexplorer.sound.SoundCompositionSimple
-import com.google.experiment.soundexplorer.sound.SoundCompositionSimple.SoundSampleType
+import com.google.experiment.soundexplorer.sound.SoundComposition
+import com.google.experiment.soundexplorer.ui.EntityMoveInteractionHandler
+import com.google.experiment.soundexplorer.ui.SimpleSimulationComponent
+import com.google.experiment.soundexplorer.ui.SoundEntityMovementHandler
 import com.google.experiment.soundexplorer.vm.SoundExplorerUiViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -93,7 +77,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
 
     private val viewModel : SoundExplorerUiViewModel by viewModels()
 
-    private var soundComponents: Array<SoundCompositionSimple.SoundCompositionComponent>? = null
+    private var soundComponents: Array<SoundComposition.SoundCompositionComponent>? = null
 
     @Inject
     lateinit var modelRepository : GlbModelRepository
@@ -155,7 +139,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
     }
 
     @Composable
-    fun MainMenu(soundComponents: Array<SoundCompositionSimple.SoundCompositionComponent>,
+    fun MainMenu(soundComponents: Array<SoundComposition.SoundCompositionComponent>,
                  viewModel: SoundExplorerUiViewModel = viewModel()) {
             SpatialBox(
                 modifier = SubspaceModifier.width(600.dp).height(600.dp),
@@ -176,7 +160,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
     }
 
     @Composable
-    fun ShapeMenu(soundComponents: Array<SoundCompositionSimple.SoundCompositionComponent>) {
+    fun ShapeMenu(soundComponents: Array<SoundComposition.SoundCompositionComponent>) {
         SpatialRow(SubspaceModifier.testTag("ShapeGrid")) {
             val columnPanelModifier = SubspaceModifier.size(150.dp).padding(20.dp)
             SpatialColumn {
@@ -248,28 +232,28 @@ class SoundExplorerUiActivity : ComponentActivity() {
         modifier: SubspaceModifier = SubspaceModifier,
         glbFileName: String = "glb2/01_animated.glb",
         glbModel : GlbModel = GlbModel.GlbModel01Static,
-        soundComponent: SoundCompositionSimple.SoundCompositionComponent
+        soundComponent: SoundComposition.SoundCompositionComponent
     ) {
-        SpatialPanel(modifier = modifier.movable(
+        SpatialPanel(modifier = modifier /* .movable(
             onPoseChange = { poseEvent ->
                 Log.d(TAG, "onPoseChange: $poseEvent")
                 viewModel.onModelPoseChange(glbModel, poseEvent)
                 false
             }
-        )) {
+        ) */) {
             PanelContent(glbFileName = glbFileName, glbModel = glbModel, soundComponent)
         }
     }
 
-    @UiComposable
+    // @UiComposable
     @Composable
     fun PanelContent(
         glbFileName: String,
         glbModel : GlbModel = GlbModel.GlbModel01Static,
-        soundComponent: SoundCompositionSimple.SoundCompositionComponent
+        soundComponent: SoundComposition.SoundCompositionComponent
     ) {
 
-        val infiniteTransition = rememberInfiniteTransition()
+        /* val infiniteTransition = rememberInfiniteTransition()
         val singleRotationDurationMs = 5000
 
         val rotationValue by
@@ -326,57 +310,37 @@ class SoundExplorerUiActivity : ComponentActivity() {
                 infiniteRepeatable(
                     animation = tween(singleRotationDurationMs * 7, easing = LinearEasing)
                 ),
-        )
+        ) */
 
         val session = checkNotNull(LocalSession.current) {
                 "LocalSession.current was null. Session must be available."
             }
-        var isOrbiterVisible by remember { mutableStateOf(false) }
+        // var isOrbiterVisible by remember { mutableStateOf(false) }
         var shape by remember {
             mutableStateOf<GltfModel?>(null)
         }
         val gltfEntity = shape?.let {
             remember {
-
                 Log.d(TAG, "gltfEntity[${glbModel.assetName}] executionTime: ")
                 // calculate time to execute commad to load model
                 val startTime = System.currentTimeMillis()
                 val gltfModelEntity = GltfModelEntity.create(session, it)
-                gltfModelEntity.addComponent(soundComponent)
-                gltfModelEntity.apply {
+
+                /* gltfModelEntity.apply {
                     addComponent(
                         InteractableComponent.create(session, mainExecutor) { ie ->
                         when (ie.action) {
-                            InputEvent.ACTION_DOWN -> {
-                                startAnimation(loop = false)
-
-                                // todo- currently this just iterates through the different sounds on click
-                                //       we need to implement the real behavior where the sound changes when moved
-                                if (!soundComponent.isPlaying) {
-                                    soundComponent.soundType = SoundSampleType.LOW
-                                    soundComponent.play()
-                                } else {
-                                    when (soundComponent.soundType) {
-                                        SoundSampleType.LOW ->
-                                            soundComponent.soundType = SoundSampleType.MEDIUM
-                                        SoundSampleType.MEDIUM ->
-                                            soundComponent.soundType = SoundSampleType.HIGH
-                                        SoundSampleType.HIGH ->
-                                            soundComponent.stop()
-                                    }
-                                }
-                            }
                             InputEvent.ACTION_HOVER_ENTER -> {
                                 isOrbiterVisible = true
-//                                setScale(1.3f)
+                                // setScale(1.2f)
                             }
                             InputEvent.ACTION_HOVER_EXIT -> {
                                 isOrbiterVisible = false
-//                                setScale(1f)
+                                // setScale(1f)
                             }
                         }
                     })
-                }
+                } */
                 val endTime = System.currentTimeMillis()
                 val executionTime = endTime - startTime
 
@@ -396,19 +360,106 @@ class SoundExplorerUiActivity : ComponentActivity() {
             Log.d(TAG, "executionTime[${glbModel.assetName}]: $executionTime")
         }
 
-        Box(
-            contentAlignment = Alignment.Center,
-        ) {
-            if (gltfEntity != null) {
-                Subspace {
+        val scope = rememberCoroutineScope()
+
+        if (gltfEntity != null) {
+            var manipulationEntity by remember {
+                mutableStateOf<Entity?>(null)
+            }
+            Subspace {
+                Volume {
+                    entity ->
+                    scope.launch {
+                        manipulationEntity = entity // todo - probably a less brittle way to set this up
+                    }
+                }
+                if (manipulationEntity != null) {
                     Volume(
-                        modifier = SubspaceModifier.rotate(axisAngle, rotationValue).alpha(0.1f)
+                        // modifier = SubspaceModifier.rotate(axisAngle, rotationValue) // .alpha(0.1f)
                     ) {
-                        gltfEntity.setParent(it)
+                        entity ->
+                        scope.launch {
+                            entity.setParent(checkNotNull(manipulationEntity))
+                            gltfEntity.setParent(entity)
+
+                            val tapHandler = object : InputEventListener {
+                                override fun onInputEvent(ie: InputEvent) {
+                                    when (ie.action) {
+                                        InputEvent.ACTION_UP -> {
+                                            gltfEntity.startAnimation(loop = false)
+
+                                            if (!soundComponent.isPlaying) {
+                                                soundComponent.play()
+                                            } else {
+                                                soundComponent.stop()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            gltfEntity.addComponent(soundComponent)
+
+                            val lowBehavior = {
+                                    e: Entity, dT: Double ->
+                                e.setPose(Pose(
+                                    e.getPose().translation,
+                                    e.getPose().rotation * Quaternion.fromAxisAngle(Vector3.Up, 20.0f * dT.toFloat())
+                                ))
+                            }
+
+                            val mediumBehavior = {
+                                    e: Entity, dT: Double ->
+                                e.setPose(Pose(
+                                    e.getPose().translation,
+                                    e.getPose().rotation * Quaternion.fromAxisAngle(Vector3.One, 40.0f * dT.toFloat())
+                                ))
+                            }
+
+                            val highBehavior = {
+                                    e: Entity, dT: Double ->
+                                e.setPose(Pose(
+                                    e.getPose().translation,
+                                    e.getPose().rotation * Quaternion.fromAxisAngle(Vector3.Right, 70.0f * dT.toFloat())
+                                ))
+                            }
+
+                            val simComponent = SimpleSimulationComponent(lifecycleScope, mediumBehavior)
+
+                            gltfEntity.addComponent(simComponent)
+
+                            soundComponent.onPropertyChanged = {
+                                if (!soundComponent.isPlaying) {
+                                    simComponent.paused = true
+                                } else {
+                                    simComponent.paused = false
+                                    simComponent.updateFn = when (soundComponent.soundType) {
+                                        SoundComposition.SoundSampleType.LOW -> lowBehavior
+                                        SoundComposition.SoundSampleType.MEDIUM -> mediumBehavior
+                                        SoundComposition.SoundSampleType.HIGH -> highBehavior
+                                    }
+                                }
+                            }
+
+                            gltfEntity.addComponent(InteractableComponent.create(session, mainExecutor,
+                                SoundEntityMovementHandler(
+                                    manipulationEntity!!,
+                                    soundComponent,
+                                    heightToChangeSound = 0.4f,
+                                    debounceThreshold = 0.05f)))
+
+                            gltfEntity.addComponent(InteractableComponent.create(session, mainExecutor,
+                                EntityMoveInteractionHandler(
+                                    manipulationEntity!!, // checkNotNull(gltfEntity.getParent()!!.getParent()),
+                                    linearAcceleration = 3.0f,
+                                    deadZone = 0.02f,
+                                    onInputEventBubble = tapHandler,
+                                    onMovementStarted = { soundComponent.play() })))
+                        }
                     }
                 }
             }
-            if (isOrbiterVisible) {
+            /* if (isOrbiterVisible) {
                 Orbiter(
                     position = OrbiterEdge.Bottom,
                     offset = 64.dp
@@ -422,7 +473,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
                         Icon(imageVector = Icons.Filled.Menu, contentDescription = "Add highlight")
                     }
                 }
-            }
+            } */
         }
     }
 }

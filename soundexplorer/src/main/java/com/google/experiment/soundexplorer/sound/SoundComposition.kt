@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class SoundCompositionSimple (
+class SoundComposition (
     val soundPoolManager: SoundPoolManager,
     val session: Session) {
 
@@ -33,12 +33,14 @@ class SoundCompositionSimple (
     }
 
     inner class SoundCompositionComponent (
-        val composition: SoundCompositionSimple,
+        val composition: SoundComposition,
         val lowSoundId: Int,
         val mediumSoundId: Int,
         val highSoundId: Int,
         defaultSoundType: SoundSampleType = SoundSampleType.MEDIUM
     ) : Component {
+        var onPropertyChanged: (() -> Unit)? = null // thread safety?
+
         val activeSoundStreamId: Int
             get() = when (this.soundType) {
                 SoundSampleType.LOW -> checkNotNull(lowSoundStreamId)
@@ -47,7 +49,15 @@ class SoundCompositionSimple (
             }
 
         var isPlaying: Boolean = false
-            internal set
+            internal set(value) {
+                if (field == value) {
+                    return
+                }
+
+                field = value
+
+                this.onPropertyChanged?.invoke()
+            }
 
         var soundType: SoundSampleType = defaultSoundType
             get() { synchronized(this) { return field } }
@@ -64,6 +74,8 @@ class SoundCompositionSimple (
                     })
 
                     field = value
+
+                    this.onPropertyChanged?.invoke()
                 }
             }
 

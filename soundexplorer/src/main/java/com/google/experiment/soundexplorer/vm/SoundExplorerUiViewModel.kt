@@ -8,14 +8,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.xr.compose.subspace.layout.PoseChangeEvent
 import androidx.xr.scenecore.GltfModel
-import androidx.xr.scenecore.Model
 import androidx.xr.scenecore.Session
 import com.google.experiment.soundexplorer.core.GlbModel
-import com.google.experiment.soundexplorer.sound.SoundCompositionSimple
+import com.google.experiment.soundexplorer.sound.SoundComposition
 import com.google.experiment.soundexplorer.sound.SoundExplorerSoundPool
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,14 +31,14 @@ class SoundExplorerUiViewModel @Inject constructor() : ViewModel() {
 
     private val _soundComponentsInitialized = MutableStateFlow<Boolean>(false)
     private var _soundPool: SoundExplorerSoundPool? = null
-    private var _soundComposition: SoundCompositionSimple? = null
+    private var _soundComposition: SoundComposition? = null
 
     val soundComponentsInitialized: StateFlow<Boolean> = _soundComponentsInitialized.asStateFlow()
 
     val soundPool: SoundExplorerSoundPool
         get() { return checkNotNull(_soundPool) }
 
-    val soundComposition: SoundCompositionSimple
+    val soundComposition: SoundComposition
         get() { return checkNotNull(_soundComposition) }
 
     companion object {
@@ -54,7 +51,7 @@ class SoundExplorerUiViewModel @Inject constructor() : ViewModel() {
         }
 
         this._soundPool = SoundExplorerSoundPool(session.activity)
-        this._soundComposition = SoundCompositionSimple(this.soundPool.manager, session)
+        this._soundComposition = SoundComposition(this.soundPool.manager, session)
 
         this._soundComponentsInitialized.value = true
     }

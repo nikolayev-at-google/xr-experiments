@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.google.experiment.soundexplorer.R
-import com.google.experiment.soundexplorer.sound.SoundCompositionSimple
+import com.google.experiment.soundexplorer.sound.SoundComposition
 import com.google.experiment.soundexplorer.vm.SoundExplorerUiViewModel
 
 
@@ -206,7 +206,7 @@ fun BottomActions(
 
             // --- Play Button ---
             when (viewModel.soundComposition.state.collectAsState().value) {
-                SoundCompositionSimple.State.LOADING -> {
+                SoundComposition.State.LOADING -> {
                     IconButton(
                         onClick = { },
                         modifier = Modifier
@@ -223,7 +223,7 @@ fun BottomActions(
                         )
                     }
                 }
-                SoundCompositionSimple.State.READY -> {
+                SoundComposition.State.READY -> {
                     IconButton(
                         onClick = { viewModel.soundComposition.play() },
                         modifier = Modifier
@@ -240,7 +240,7 @@ fun BottomActions(
                         )
                     }
                 }
-                SoundCompositionSimple.State.PLAYING -> {
+                SoundComposition.State.PLAYING -> {
                     IconButton(
                         onClick = { viewModel.soundComposition.stop() },
                         modifier = Modifier
@@ -257,7 +257,7 @@ fun BottomActions(
                         )
                     }
                 }
-                SoundCompositionSimple.State.STOPPED -> {
+                SoundComposition.State.STOPPED -> {
                     IconButton(
                         onClick = { viewModel.soundComposition.play() },
                         modifier = Modifier
