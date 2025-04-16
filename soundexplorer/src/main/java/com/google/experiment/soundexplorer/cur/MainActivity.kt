@@ -92,17 +92,7 @@ class MainActivity : ComponentActivity() {
                 this.soundObjects = createSoundObjects(
                     session,
                     modelRepository,
-                    arrayOf(
-                        GlbModel.GlbModel01Animated,
-                        GlbModel.GlbModel02Animated,
-                        GlbModel.GlbModel03Animated,
-                        GlbModel.GlbModel04Animated,
-                        GlbModel.GlbModel05Animated,
-                        GlbModel.GlbModel06Animated,
-                        GlbModel.GlbModel07Animated,
-                        GlbModel.GlbModel08Animated,
-                        GlbModel.GlbModel09Animated
-                    )
+                    GlbModel.allGlbAnimatedModels.toTypedArray()
                 )
             }
 
