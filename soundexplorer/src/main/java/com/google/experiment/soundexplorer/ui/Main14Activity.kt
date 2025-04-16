@@ -26,9 +26,15 @@ import androidx.xr.compose.spatial.Subspace
 import androidx.xr.compose.subspace.SpatialPanel
 import androidx.xr.runtime.math.Pose
 import androidx.xr.runtime.math.Vector3
+import androidx.xr.scenecore.ContentlessEntity
 import androidx.xr.scenecore.Dimensions
+import androidx.xr.scenecore.GltfModel
+import androidx.xr.scenecore.GltfModelEntity
+import androidx.xr.scenecore.InputEvent
+import androidx.xr.scenecore.InteractableComponent
 import androidx.xr.scenecore.PanelEntity
 import androidx.xr.scenecore.Session
+import com.google.experiment.soundexplorer.core.GlbModel
 import com.google.experiment.soundexplorer.core.GlbModelRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -45,7 +51,8 @@ class Main14Activity : ComponentActivity() {
 
     private val sceneCoreSession by lazy { Session.create(this) }
 
-    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
+//    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
+    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, 0.0f, -1.5f)))
     private lateinit var dialogPanel : PanelEntity
 
 
@@ -53,20 +60,21 @@ class Main14Activity : ComponentActivity() {
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            val session = LocalSession.current
-            if (session == null) {
-                return@setContent
-            }
-            Subspace {
-                MainScreen(modelRepository)
-            }
-        }
+//        setContent {
+//            val session = LocalSession.current
+//            if (session == null) {
+//                return@setContent
+//            }
+//            Subspace {
+//                MainScreen(modelRepository)
+//            }
+//        }
 
-//        sceneCoreSession.mainPanelEntity.setHidden(true)
+        sceneCoreSession.mainPanelEntity.setHidden(true)
 //
-//        createHeadLockedPanelUi()
+        createHeadLockedPanelUi()
 
+        createModels()
 //        lifecycleScope.launch {
 //            viewModel.isModelsVisible.collect {
 //                Log.d("TAG", "onCreate: collect collect collect collect")
@@ -123,7 +131,8 @@ class Main14Activity : ComponentActivity() {
             Toolbar(
                 {viewModel.showDialog()},
                 {viewModel.showModels()},
-                {}
+                {},
+                modelRepository = modelRepository
             )
         }
         val headLockedPanel = createPanelUi(
@@ -141,29 +150,58 @@ class Main14Activity : ComponentActivity() {
 //        createHeadLockedDialogUi(headLockedPanel)
     }
 
-    private fun createHeadLockedDialogUi(headLockedPanel : PanelEntity) {
-        val dialogView = createPanelView(this) {
-            RestartDialogContent()
-        }
-        dialogPanel = createPanelUi(
-            session = sceneCoreSession,
-            view = dialogView,
-            surfaceDimensionsPx = Dimensions(1000f, 1000f),
-            dimensions = Dimensions(100f, 100f),
-            panelName = "dialogPanel",
-            pose = userForward
-        )
-//        dialogPanel.setParent(headLockedPanel)
-        dialogPanel.setHidden(true)
-    }
-
     private fun updateHeadLockedPose(view: View, panelEntity: PanelEntity) {
         sceneCoreSession.spatialUser.head?.let { projectionSource ->
             projectionSource.transformPoseTo(userForward, sceneCoreSession.activitySpace).let {
                 panelEntity.setPose(it)
+                viewModel.setToolbarPose(it)
             }
         }
         view.postOnAnimation { updateHeadLockedPose(view, panelEntity) }
     }
 
+    private fun createModels() {
+        lifecycleScope.launch {
+
+            val menu = ContentlessEntity.create(sceneCoreSession, "menu")
+
+            var delta = 0.6f
+            GlbModel.allGlbStaticModels.forEach {
+                val shape = modelRepository.getOrLoadModel(it).getOrNull() as GltfModel?
+                GltfModelEntity.create(sceneCoreSession, shape!!).apply {
+                    setParent(menu)
+                    setPose(
+                        Pose.Identity
+                            .translate(Pose.Identity.up * 0.15f)
+                            .translate(Pose.Identity.left * delta)
+                    )
+                    delta -= 0.15f
+
+                    addComponent(
+                        InteractableComponent.create(sceneCoreSession, mainExecutor) { ie ->
+                            when (ie.action) {
+                                InputEvent.ACTION_HOVER_ENTER -> {
+                                    setScale(1.3f)
+                                }
+                                InputEvent.ACTION_HOVER_EXIT -> {
+                                    setScale(1f)
+                                }
+                            }
+                        })
+                }
+            }
+
+            launch {
+                viewModel.toolbarPose.collect { toolbarPose ->
+                    menu.setPose(toolbarPose)
+                }
+            }
+
+            launch {
+                viewModel.isModelsVisible.collect {
+                    menu.setHidden(!it)
+                }
+            }
+        }
+    }
 }

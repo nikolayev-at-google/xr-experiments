@@ -76,7 +76,9 @@ import androidx.xr.compose.subspace.layout.height
 import androidx.xr.compose.subspace.layout.rotate
 import androidx.xr.compose.subspace.layout.size
 import androidx.xr.compose.subspace.layout.width
+import androidx.xr.runtime.math.Pose
 import androidx.xr.runtime.math.Vector3
+import androidx.xr.scenecore.Entity
 import androidx.xr.scenecore.GltfModel
 import androidx.xr.scenecore.GltfModelEntity
 import androidx.xr.scenecore.InputEvent
@@ -101,6 +103,9 @@ class MainViewModel @Inject constructor(
     private val _isModelsVisible = MutableStateFlow(false)
     val isModelsVisible = _isModelsVisible.asStateFlow()
 
+    private val _toolbarPose = MutableStateFlow(Pose())
+    val toolbarPose = _toolbarPose.asStateFlow()
+
     // Action to show dialog
     fun showDialog() {
         _isDialogVisible.value = !_isDialogVisible.value
@@ -111,6 +116,10 @@ class MainViewModel @Inject constructor(
         _isModelsVisible.value = !_isModelsVisible.value
         _isDialogVisible.value = false
     }
+
+    fun setToolbarPose(pose: Pose) {
+        _toolbarPose.value = pose
+    }
 }
 
 // ToolbarComposable.kt
@@ -119,7 +128,9 @@ fun Toolbar(
     onRefreshClick: () -> Unit,
     onAddClick: () -> Unit,
     onPauseClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modelRepository : GlbModelRepository,
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel = viewModel()
 ) {
     Box(
         modifier = modifier
@@ -172,6 +183,171 @@ fun Toolbar(
     }
 }
 
+@Composable
+fun ModelsRow(
+    modelRepository : GlbModelRepository,
+    viewModel: MainViewModel = viewModel()
+) {
+    val isModelsVisible by viewModel.isModelsVisible.collectAsState()
+    val toolbarPose by viewModel.toolbarPose.collectAsState()
+
+    Subspace {
+        val session = checkNotNull(LocalSession.current) {
+            "LocalSession.current was null. Session must be available."
+        }
+
+        var shape01 by remember { mutableStateOf<GltfModel?>(null) }
+        val gltfEntity01 = shape01?.let {
+            remember {
+                val entity = GltfModelEntity.create(session, it)
+                entity.setHidden(true)
+                entity
+            }
+        }
+
+        var shape02 by remember { mutableStateOf<GltfModel?>(null) }
+        val gltfEntity02 = shape02?.let {
+            remember {
+                val entity = GltfModelEntity.create(session, it)
+                entity.setHidden(true)
+                entity
+            }
+        }
+//
+        var shape03 by remember { mutableStateOf<GltfModel?>(null) }
+        val gltfEntity03 = shape03?.let {
+            remember {
+                val entity = GltfModelEntity.create(session, it)
+                entity.setHidden(true)
+                entity
+            }
+        }
+//
+        var shape04 by remember { mutableStateOf<GltfModel?>(null) }
+        val gltfEntity04 = shape04?.let {
+            remember {
+                val entity = GltfModelEntity.create(session, it)
+                entity.setHidden(true)
+                entity
+            }
+        }
+//
+        var shape05 by remember { mutableStateOf<GltfModel?>(null) }
+        val gltfEntity05 = shape05?.let {
+            remember {
+                val entity = GltfModelEntity.create(session, it)
+                entity.setHidden(true)
+                entity
+            }
+        }
+//
+        var shape06 by remember { mutableStateOf<GltfModel?>(null) }
+        val gltfEntity06 = shape06?.let {
+            remember {
+                val entity = GltfModelEntity.create(session, it)
+                entity.setHidden(true)
+                entity
+            }
+        }
+        //
+        var shape07 by remember { mutableStateOf<GltfModel?>(null) }
+        val gltfEntity07 = shape07?.let {
+            remember {
+                val entity = GltfModelEntity.create(session, it)
+                entity.setHidden(true)
+                entity
+            }
+        }
+        //
+        var shape08 by remember { mutableStateOf<GltfModel?>(null) }
+        val gltfEntity08 = shape08?.let {
+            remember {
+                val entity = GltfModelEntity.create(session, it)
+                entity.setHidden(true)
+                entity
+            }
+        }
+        //
+        var shape09 by remember { mutableStateOf<GltfModel?>(null) }
+        val gltfEntity09 = shape09?.let {
+            remember {
+                val entity = GltfModelEntity.create(session, it)
+                entity.setHidden(true)
+                entity
+            }
+        }
+
+
+
+        gltfEntity01?.setPose(
+            toolbarPose
+                .translate(toolbarPose.up*0.15f)
+        )
+        gltfEntity02?.setPose(
+            toolbarPose
+                .translate(toolbarPose.left*0.15f)
+                .translate(toolbarPose.up*0.15f)
+        )
+        gltfEntity03?.setPose(
+            toolbarPose
+                .translate(toolbarPose.left*0.3f)
+                .translate(toolbarPose.up*0.15f)
+        )
+        gltfEntity04?.setPose(
+            toolbarPose
+                .translate(toolbarPose.left*0.45f)
+                .translate(toolbarPose.up*0.15f)
+        )
+        gltfEntity05?.setPose(
+            toolbarPose
+                .translate(toolbarPose.left*0.6f)
+                .translate(toolbarPose.up*0.15f)
+        )
+        gltfEntity06?.setPose(
+            toolbarPose
+                .translate(toolbarPose.up*0.15f)
+                .translate(toolbarPose.right*0.15f)
+        )
+        gltfEntity07?.setPose(
+            toolbarPose
+                .translate(toolbarPose.up*0.15f)
+                .translate(toolbarPose.right*0.3f)
+        )
+        gltfEntity08?.setPose(
+            toolbarPose
+                .translate(toolbarPose.up*0.15f)
+                .translate(toolbarPose.right*0.45f)
+        )
+        gltfEntity09?.setPose(
+            toolbarPose
+                .translate(toolbarPose.up*0.15f)
+                .translate(toolbarPose.right*0.6f)
+        )
+
+        gltfEntity01?.setHidden(isModelsVisible)
+        gltfEntity02?.setHidden(isModelsVisible)
+        gltfEntity03?.setHidden(isModelsVisible)
+        gltfEntity04?.setHidden(isModelsVisible)
+        gltfEntity05?.setHidden(isModelsVisible)
+        gltfEntity06?.setHidden(isModelsVisible)
+        gltfEntity07?.setHidden(isModelsVisible)
+        gltfEntity08?.setHidden(isModelsVisible)
+        gltfEntity09?.setHidden(isModelsVisible)
+
+        LaunchedEffect(Unit) {
+            shape01 = modelRepository.getOrLoadModel(GlbModel.GlbModel01Static).getOrNull() as GltfModel?
+            shape02 = modelRepository.getOrLoadModel(GlbModel.GlbModel02Static).getOrNull() as GltfModel?
+            shape03 = modelRepository.getOrLoadModel(GlbModel.GlbModel03Static).getOrNull() as GltfModel?
+            shape04 = modelRepository.getOrLoadModel(GlbModel.GlbModel04Static).getOrNull() as GltfModel?
+            shape05 = modelRepository.getOrLoadModel(GlbModel.GlbModel05Static).getOrNull() as GltfModel?
+            shape06 = modelRepository.getOrLoadModel(GlbModel.GlbModel06Static).getOrNull() as GltfModel?
+            shape07 = modelRepository.getOrLoadModel(GlbModel.GlbModel07Static).getOrNull() as GltfModel?
+            shape08 = modelRepository.getOrLoadModel(GlbModel.GlbModel08Static).getOrNull() as GltfModel?
+            shape09 = modelRepository.getOrLoadModel(GlbModel.GlbModel09Static).getOrNull() as GltfModel?
+        }
+    }
+}
+
 // MainScreen.kt
 @Composable
 fun MainScreen(
@@ -198,6 +374,7 @@ fun MainScreen(
                 onRefreshClick = { viewModel.showDialog() },
                 onAddClick = { viewModel.showModels() },
                 onPauseClick = { /* Pause functionality */ },
+                modelRepository = modelRepository,
                 modifier = Modifier
                     .padding(bottom = 16.dp)
                     .width(160.dp)
@@ -408,7 +585,7 @@ fun PanelContent(
 fun ModelsSpatialBoxRow(
     modelRepository : GlbModelRepository
 ) {
-    SpatialRow(curveRadius = 300.dp) {
+    SpatialRow(curveRadius = 90.dp) {
         val session = checkNotNull(LocalSession.current) {
             "LocalSession.current was null. Session must be available."
         }
@@ -575,6 +752,7 @@ fun ModelsSpatialBoxRow(
         }
     }
 }
+
 
 @Composable
 fun ModelsSpatialPanelRow(
