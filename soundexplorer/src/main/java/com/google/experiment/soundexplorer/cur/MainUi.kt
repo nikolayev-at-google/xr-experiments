@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
@@ -42,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +68,8 @@ import androidx.xr.compose.subspace.layout.height
 import androidx.xr.compose.subspace.layout.rotate
 import androidx.xr.compose.subspace.layout.size
 import androidx.xr.compose.subspace.layout.width
+import androidx.xr.runtime.math.Pose
+import androidx.xr.runtime.math.Quaternion
 import androidx.xr.runtime.math.Vector3
 import androidx.xr.scenecore.GltfModel
 import androidx.xr.scenecore.GltfModelEntity
@@ -73,6 +77,11 @@ import androidx.xr.scenecore.InputEvent
 import androidx.xr.scenecore.InteractableComponent
 import com.google.experiment.soundexplorer.core.GlbModel
 import com.google.experiment.soundexplorer.core.GlbModelRepository
+import com.google.experiment.soundexplorer.sound.SoundComposition
+import com.google.experiment.soundexplorer.ui.SoundObjectComponent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -84,7 +93,6 @@ import kotlin.math.roundToInt
 fun Toolbar(
     onRefreshClick: () -> Unit,
     onAddClick: () -> Unit,
-    onPauseClick: () -> Unit,
     viewModel: MainViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -129,13 +137,44 @@ fun Toolbar(
                 )
             }
 
-            // Pause button
-            IconButton(onClick = onPauseClick) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Pause",
-                    tint = Color.White
-                )
+            // play/pause button
+            when (viewModel.soundComposition.state.collectAsState().value) {
+                SoundComposition.State.LOADING -> {
+                    IconButton(onClick = { }) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Loading",
+                            tint = Color.Gray
+                        )
+                    }
+                }
+                SoundComposition.State.READY -> {
+                    IconButton(onClick = { viewModel.soundComposition.play() }) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Play",
+                            tint = Color.White
+                        )
+                    }
+                }
+                SoundComposition.State.PLAYING -> {
+                    IconButton(onClick = { viewModel.soundComposition.stop() }) {
+                        Icon(
+                            imageVector = Icons.Default.Close, // todo- should be a pause or stop icon
+                            contentDescription = "Pause",
+                            tint = Color.White
+                        )
+                    }
+                }
+                SoundComposition.State.STOPPED -> {
+                    IconButton(onClick = { viewModel.soundComposition.play() }) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Play",
+                            tint = Color.White
+                        )
+                    }
+                }
             }
         }
     }
@@ -145,6 +184,7 @@ fun Toolbar(
 @Composable
 fun MainScreen(
     modelRepository : GlbModelRepository,
+    soundObjects: Array<SoundObjectComponent>,
     viewModel: MainViewModel = viewModel()
 ) {
     val isDialogVisible by viewModel.isDialogVisible.collectAsState()
@@ -155,7 +195,7 @@ fun MainScreen(
     ) {
 
         if (isModelsVisible) {
-            ModelsSpatialPanelRow(modelRepository)
+            ModelsSpatialPanelRow(modelRepository, soundObjects)
         }
 
         SpatialPanel {} // need to anchor orbiter
@@ -166,7 +206,6 @@ fun MainScreen(
             Toolbar(
                 onRefreshClick = { viewModel.showDialog() },
                 onAddClick = { viewModel.showModels() },
-                onPauseClick = { /* Pause functionality */ },
                 modifier = Modifier
                     .padding(bottom = 16.dp)
                     .width(160.dp)
@@ -267,6 +306,7 @@ fun RestartDialogContent() {
 fun PanelContent(
     modelRepository : GlbModelRepository,
     glbModel : GlbModel = GlbModel.GlbModel01Static,
+    soundObject : SoundObjectComponent
 ) {
 
     val infiniteTransition = rememberInfiniteTransition()
@@ -317,6 +357,12 @@ fun PanelContent(
     var shape by remember {
         mutableStateOf<GltfModel?>(null)
     }
+
+    val scope = rememberCoroutineScope()
+    var initializeSoundObjectJob by remember {
+        mutableStateOf<Job?>(null)
+    }
+
     val mainExecutor = LocalActivity.current!!.mainExecutor
     val gltfEntity = shape?.let {
         remember {
@@ -331,10 +377,22 @@ fun PanelContent(
                         when (ie.action) {
                             InputEvent.ACTION_DOWN -> {
                                 startAnimation(loop = false)
-                            }
-                            InputEvent.ACTION_HOVER_ENTER -> {
-                            }
-                            InputEvent.ACTION_HOVER_EXIT -> {
+
+                                if (initializeSoundObjectJob == null) {
+                                    initializeSoundObjectJob = scope.launch(Dispatchers.Main) {
+                                        if (session.spatialUser.head == null) {
+                                            return@launch
+                                        }
+
+                                        val initialLocation = checkNotNull(session.spatialUser.head).transformPoseTo(
+                                            Pose(Vector3.Forward * 1.0f, Quaternion.Identity),
+                                            session.activitySpace)
+
+                                        soundObject.initialize(initialLocation)
+                                        soundObject.setHidden(false)
+                                        soundObject.soundComponent.play()
+                                    }
+                                }
                             }
                         }
                     })
@@ -547,7 +605,8 @@ fun ModelsSpatialBoxRow(
 
 @Composable
 fun ModelsSpatialPanelRow(
-    modelRepository : GlbModelRepository
+    modelRepository : GlbModelRepository,
+    soundObjects: Array<SoundObjectComponent>
 ) {
     SpatialRow {
         SpatialPanel(
@@ -557,7 +616,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel01Animated)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel01Animated, soundObjects[0])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -568,7 +627,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel02Animated)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel02Animated, soundObjects[1])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -579,7 +638,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel03Animated)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel03Animated, soundObjects[2])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -590,7 +649,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel04Animated)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel04Animated, soundObjects[3])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -601,7 +660,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel05Animated)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel05Animated, soundObjects[4])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -612,7 +671,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel06Animated)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel06Animated, soundObjects[5])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -623,7 +682,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel07Animated)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel07Animated, soundObjects[6])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -634,7 +693,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel08Animated)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel08Animated, soundObjects[7])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -645,7 +704,7 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel09Animated)
+                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel09Animated, soundObjects[8])
             }
         }
     }
