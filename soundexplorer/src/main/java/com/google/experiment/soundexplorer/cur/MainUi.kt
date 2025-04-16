@@ -203,13 +203,7 @@ fun MainScreen(
             position = OrbiterEdge.Bottom,
             offset = 96.dp
         ) {
-            Toolbar(
-                onRefreshClick = { viewModel.showDialog() },
-                onAddClick = { viewModel.showModels() },
-                modifier = Modifier
-                    .padding(bottom = 16.dp)
-                    .width(160.dp)
-            )
+            ToolbarContent()
         }
 
         // Dialog
@@ -217,6 +211,19 @@ fun MainScreen(
             RestartDialog()
         }
     }
+}
+
+@Composable
+fun ToolbarContent(
+    viewModel: MainViewModel = viewModel()
+) {
+    Toolbar(
+        onRefreshClick = { viewModel.showDialog() },
+        onAddClick = { viewModel.showModels() },
+        modifier = Modifier
+            .padding(bottom = 16.dp)
+            .width(160.dp)
+    )
 }
 
 @Composable

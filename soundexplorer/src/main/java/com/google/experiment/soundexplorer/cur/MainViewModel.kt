@@ -1,6 +1,7 @@
 package com.google.experiment.soundexplorer.cur
 
 import androidx.lifecycle.ViewModel
+import androidx.xr.runtime.math.Pose
 import androidx.xr.scenecore.Session
 import com.google.experiment.soundexplorer.sound.SoundComposition
 import com.google.experiment.soundexplorer.sound.SoundExplorerSoundPool
@@ -22,6 +23,9 @@ class MainViewModel @Inject constructor(
 
     private val _soundComponentsInitialized = MutableStateFlow<Boolean>(false)
     val soundComponentsInitialized: StateFlow<Boolean> = _soundComponentsInitialized.asStateFlow()
+
+    private val _toolbarPose = MutableStateFlow(Pose())
+    val toolbarPose = _toolbarPose.asStateFlow()
 
     private var _soundPool: SoundExplorerSoundPool? = null
     val soundPool: SoundExplorerSoundPool
@@ -51,5 +55,9 @@ class MainViewModel @Inject constructor(
         this._soundComposition = SoundComposition(this.soundPool.manager, session)
 
         this._soundComponentsInitialized.value = true
+    }
+
+    fun setToolbarPose(pose: Pose) {
+        _toolbarPose.value = pose
     }
 }
