@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,9 +20,6 @@ import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import androidx.xr.compose.platform.LocalSession
-import androidx.xr.compose.spatial.Subspace
-import androidx.xr.compose.subspace.SpatialPanel
 import androidx.xr.runtime.math.Pose
 import androidx.xr.runtime.math.Vector3
 import androidx.xr.scenecore.ContentlessEntity
@@ -51,43 +47,18 @@ class Main14Activity : ComponentActivity() {
 
     private val sceneCoreSession by lazy { Session.create(this) }
 
-//    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
-    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, 0.0f, -1.5f)))
-    private lateinit var dialogPanel : PanelEntity
+    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
+//    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, 0.0f, -1.5f)))
 
 
 
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        setContent {
-//            val session = LocalSession.current
-//            if (session == null) {
-//                return@setContent
-//            }
-//            Subspace {
-//                MainScreen(modelRepository)
-//            }
-//        }
-
         sceneCoreSession.mainPanelEntity.setHidden(true)
-//
         createHeadLockedPanelUi()
-
         createModels()
-//        lifecycleScope.launch {
-//            viewModel.isModelsVisible.collect {
-//                Log.d("TAG", "onCreate: collect collect collect collect")
-//            }
-//        }
-//        lifecycleScope.launch {
-//            viewModel.isDialogVisible.collect {
-//                Log.d("TAG", "onCreate: collect collect collect collect")
-//                dialogPanel.setHidden(it)
-//            }
-//        }
     }
-
 
     private fun createPanelView(
         activity: Activity,

@@ -12,25 +12,25 @@ sealed class GlbModel(val assetName: String) {
     object GlbModel02Static : GlbModel("glb4/08_pluff_static.glb") // 2
     object GlbModel03Static : GlbModel("glb4/09_pillowtri_static.glb") // 3
 
-    object GlbModel01Inactive : GlbModel("glb4/01_bloomspire_inactive.glb")
-    object GlbModel02Inactive : GlbModel("glb4/02_pumpod_inactive.glb")
-    object GlbModel03Inactive : GlbModel("glb4/03_swirlnut_inactive.glb")
-    object GlbModel04Inactive : GlbModel("glb4/04_twistbud_inactive.glb")
-    object GlbModel05Inactive : GlbModel("glb4/05_squube_inactive.glb")
-    object GlbModel06Inactive : GlbModel("glb4/06_cello_inactive.glb")
-    object GlbModel07Inactive : GlbModel("glb4/07_munchkin_inactive.glb")
-    object GlbModel08Inactive : GlbModel("glb4/08_pluff_inactive.glb")
-    object GlbModel09Inactive : GlbModel("glb4/09_pillowtri_inactive.glb")
+    object GlbModel07Inactive : GlbModel("glb4/01_bloomspire_inactive.glb")
+    object GlbModel01Inactive : GlbModel("glb4/02_pumpod_inactive.glb")
+    object GlbModel04Inactive : GlbModel("glb4/03_swirlnut_inactive.glb")
+    object GlbModel05Inactive : GlbModel("glb4/04_twistbud_inactive.glb")
+    object GlbModel06Inactive : GlbModel("glb4/05_squube_inactive.glb")
+    object GlbModel08Inactive : GlbModel("glb4/06_cello_inactive.glb")
+    object GlbModel09Inactive : GlbModel("glb4/07_munchkin_inactive.glb")
+    object GlbModel02Inactive : GlbModel("glb4/08_pluff_inactive.glb")
+    object GlbModel03Inactive : GlbModel("glb4/09_pillowtri_inactive.glb")
 
-    object GlbModel01Animated : GlbModel("glb4/01_bloomspire_animated.glb")
-    object GlbModel02Animated : GlbModel("glb4/02_pumpod_animated.glb")
-    object GlbModel03Animated : GlbModel("glb4/03_swirlnut_animated.glb")
-    object GlbModel04Animated : GlbModel("glb4/04_twistbud_animated.glb")
-    object GlbModel05Animated : GlbModel(assetName = "glb4/05_squube_animated.glb")
-    object GlbModel06Animated : GlbModel("glb4/06_cello_animated.glb")
-    object GlbModel07Animated : GlbModel("glb4/07_munchkin_animated.glb")
-    object GlbModel08Animated : GlbModel("glb4/08_pluff_animated.glb")
-    object GlbModel09Animated : GlbModel("glb4/09_pillowtri_animated.glb")
+    object GlbModel07Animated : GlbModel("glb4/01_bloomspire_animated.glb")
+    object GlbModel01Animated : GlbModel("glb4/02_pumpod_animated.glb")
+    object GlbModel04Animated : GlbModel("glb4/03_swirlnut_animated.glb")
+    object GlbModel05Animated : GlbModel("glb4/04_twistbud_animated.glb")
+    object GlbModel06Animated : GlbModel(assetName = "glb4/05_squube_animated.glb")
+    object GlbModel08Animated : GlbModel("glb4/06_cello_animated.glb")
+    object GlbModel09Animated : GlbModel("glb4/07_munchkin_animated.glb")
+    object GlbModel02Animated : GlbModel("glb4/08_pluff_animated.glb")
+    object GlbModel03Animated : GlbModel("glb4/09_pillowtri_animated.glb")
     companion object {
         val allGlbStaticModels = listOf(
             GlbModel01Static,
