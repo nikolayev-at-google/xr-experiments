@@ -58,6 +58,24 @@ class SoundObjectComponent(
     private var isInitialized = false
     private var entity: Entity? = null
 
+    var hidden : Boolean
+        get() {
+            val e = this.entity
+            if (e == null) {
+                throw IllegalStateException("Tried to get hidden state on sound object when entity was detached!")
+            }
+
+            return e.isHidden(false)
+        }
+        set(value) {
+            val e = this.entity
+            if (e == null) {
+                throw IllegalStateException("Tried to set hidden state on sound object when entity was detached!")
+            }
+
+            e.setHidden(value)
+        }
+
     override fun onAttach(entity: Entity): Boolean {
         this.entity = entity
         return true
@@ -68,16 +86,20 @@ class SoundObjectComponent(
         this.entity = null
     }
 
-    fun setHidden(hidden: Boolean) {
+    fun setPose(pose: Pose) {
         val e = this.entity
         if (e == null) {
-            throw IllegalStateException("Tried to set hidden state on sound object when entity was detached!")
+            throw IllegalStateException("Tried to set translation on sound object when entity was detached!")
         }
 
-        e.setHidden(hidden)
+        e.setPose(pose)
     }
 
     suspend fun initialize(initialLocation: Pose) {
+        val e = checkNotNull(this.entity)
+
+        e.setPose(initialLocation)
+
         if (this.isInitialized) {
             return
         }
@@ -86,10 +108,6 @@ class SoundObjectComponent(
         if (gltfModel == null) {
             throw IllegalArgumentException("Failed to load model " + glbModel.assetName)
         }
-
-        val e = checkNotNull(this.entity)
-
-        e.setPose(initialLocation)
 
         // Object Manipulation -> Local Programmatic Animation -> Model
 
@@ -165,7 +183,7 @@ class SoundObjectComponent(
         gltfModelEntity.addComponent(InteractableComponent.create(session, mainExecutor,
             EntityMoveInteractionHandler(
                 e,
-                linearAcceleration = 3.0f,
+                linearAcceleration = 2.0f,
                 deadZone = 0.02f,
                 onInputEventBubble = tapHandler)))
 
