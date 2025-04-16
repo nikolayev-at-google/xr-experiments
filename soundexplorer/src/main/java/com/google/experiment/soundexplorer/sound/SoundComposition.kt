@@ -247,10 +247,6 @@ class SoundComposition (
         }
     }
 
-    fun pause() {
-        stop()
-    }
-
     fun stop() {
         synchronized(this) {
             if (this._state.value != State.PLAYING) {

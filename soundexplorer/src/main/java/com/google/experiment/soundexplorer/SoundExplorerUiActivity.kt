@@ -445,7 +445,7 @@ class SoundExplorerUiActivity : ComponentActivity() {
                                 SoundEntityMovementHandler(
                                     manipulationEntity!!,
                                     soundComponent,
-                                    heightToChangeSound = 0.4f,
+                                    heightToChangeSound = 0.2f,
                                     debounceThreshold = 0.05f)))
 
                             gltfEntity.addComponent(InteractableComponent.create(session, mainExecutor,
