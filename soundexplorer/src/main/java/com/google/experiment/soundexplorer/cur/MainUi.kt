@@ -71,6 +71,8 @@ import androidx.xr.compose.subspace.layout.width
 import androidx.xr.runtime.math.Pose
 import androidx.xr.runtime.math.Quaternion
 import androidx.xr.runtime.math.Vector3
+import androidx.xr.scenecore.ContentlessEntity
+import androidx.xr.scenecore.Entity
 import androidx.xr.scenecore.GltfModel
 import androidx.xr.scenecore.GltfModelEntity
 import androidx.xr.scenecore.InputEvent
@@ -312,7 +314,8 @@ fun RestartDialogContent() {
 @Composable
 fun PanelContent(
     modelRepository : GlbModelRepository,
-    glbModel : GlbModel = GlbModel.GlbModel01Static,
+    glbModelActive : GlbModel = GlbModel.GlbModel01Static,
+    glbModelInactive : GlbModel = GlbModel.GlbModel01Inactive,
     soundObject : SoundObjectComponent
 ) {
 
@@ -361,9 +364,9 @@ fun PanelContent(
     val session = checkNotNull(LocalSession.current) {
         "LocalSession.current was null. Session must be available."
     }
-    var shape by remember {
-        mutableStateOf<GltfModel?>(null)
-    }
+
+    var shapeActive by remember { mutableStateOf<GltfModel?>(null) }
+    var shapeInactive by remember { mutableStateOf<GltfModel?>(null) }
 
     val scope = rememberCoroutineScope()
     var initializeSoundObjectJob by remember {
@@ -371,19 +374,31 @@ fun PanelContent(
     }
 
     val mainExecutor = LocalActivity.current!!.mainExecutor
-    val gltfEntity = shape?.let {
-        remember {
 
-            Log.d("TAG", "gltfEntity[${glbModel.assetName}] executionTime: ")
-            // calculate time to execute commad to load model
-            val startTime = System.currentTimeMillis()
-            val gltfModelEntity = GltfModelEntity.create(session, it)
-            gltfModelEntity.apply {
-                addComponent(
-                    InteractableComponent.create(session, mainExecutor) { ie ->
-                        when (ie.action) {
-                            InputEvent.ACTION_DOWN -> {
-                                startAnimation(loop = false)
+    val gltfEntity: Entity? =
+        if (shapeActive == null || shapeInactive == null) {
+            null
+        } else {
+            remember {
+                Log.d("TAG", "gltfEntity[${glbModelActive.assetName}, ${glbModelInactive.assetName}] executionTime: ")
+                // calculate time to execute commad to load model
+                val startTime = System.currentTimeMillis()
+
+                val shapeEntity = ContentlessEntity.create(session, "ModelIcon")
+
+                val gltfActiveModelEntity = GltfModelEntity.create(session, checkNotNull(shapeActive))
+                gltfActiveModelEntity.setParent(shapeEntity)
+
+                val gltfInactiveModelEntity = GltfModelEntity.create(session, checkNotNull(shapeInactive))
+                gltfInactiveModelEntity.setParent(shapeEntity)
+
+                gltfActiveModelEntity.apply {
+                    addComponent(
+                        InteractableComponent.create(session, mainExecutor) { ie ->
+                            if (ie.action == InputEvent.ACTION_DOWN) {
+                                gltfInactiveModelEntity.setHidden(false)
+                                // gltfInactiveModelEntity.startAnimation(loop = false)
+                                gltfActiveModelEntity.setHidden(true)
 
                                 if (initializeSoundObjectJob == null) {
                                     initializeSoundObjectJob = scope.launch(Dispatchers.Main) {
@@ -396,31 +411,72 @@ fun PanelContent(
                                             session.activitySpace)
 
                                         soundObject.initialize(initialLocation)
-                                        soundObject.setHidden(false)
+                                        soundObject.hidden = false
                                         soundObject.soundComponent.play()
                                     }
+                                } else {
+                                    val initialLocation = checkNotNull(session.spatialUser.head).transformPoseTo(
+                                        Pose(Vector3.Forward * 1.0f, Quaternion.Identity),
+                                        session.activitySpace)
+
+                                    soundObject.setPose(initialLocation)
+                                    soundObject.hidden = false
+                                    soundObject.soundComponent.play()
                                 }
+                            } else if (ie.action == InputEvent.ACTION_HOVER_ENTER) {
+                                gltfActiveModelEntity.setScale(1.4f)
+                            } else if (ie.action == InputEvent.ACTION_HOVER_EXIT) {
+                                gltfActiveModelEntity.setScale(1.0f)
+                            }
+                        })
+                }
+
+                gltfInactiveModelEntity.apply {
+                    addComponent(
+                        InteractableComponent.create(session, mainExecutor) { ie ->
+                            if (ie.action == InputEvent.ACTION_DOWN) {
+                                gltfActiveModelEntity.setHidden(false)
+                                // gltfActiveModelEntity.startAnimation(loop = false)
+                                gltfInactiveModelEntity.setHidden(true)
+                                soundObject.soundComponent.stop()
+                                soundObject.hidden = true
+                            } else if (ie.action == InputEvent.ACTION_HOVER_ENTER) {
+                                gltfInactiveModelEntity.setScale(1.4f)
+                            } else if (ie.action == InputEvent.ACTION_HOVER_EXIT) {
+                                gltfInactiveModelEntity.setScale(1.0f)
                             }
                         }
-                    })
+                    )
+                }
+                gltfInactiveModelEntity.setHidden(true)
+
+                val endTime = System.currentTimeMillis()
+                val executionTime = endTime - startTime
+
+                Log.d("TAG", "gltfEntity executionTime[${glbModelActive.assetName}, ${glbModelInactive.assetName}]: $executionTime")
+
+                return@remember shapeEntity
             }
-            val endTime = System.currentTimeMillis()
-            val executionTime = endTime - startTime
-
-            Log.d("TAG", "gltfEntity executionTime[${glbModel.assetName}]: $executionTime")
-
-            return@remember gltfModelEntity
         }
-    }
 
-    LaunchedEffect(glbModel.assetName) {
-        Log.d("TAG", "executionTime[${glbModel.assetName}]: ")
+    LaunchedEffect(glbModelActive.assetName) {
+        Log.d("TAG", "executionTime[${glbModelActive.assetName}]: ")
         // calculate time to execute commad to load model
         val startTime = System.currentTimeMillis()
-        shape = modelRepository.getOrLoadModel(glbModel).getOrNull() as GltfModel?
+        shapeActive = modelRepository.getOrLoadModel(glbModelActive).getOrNull() as GltfModel?
         val endTime = System.currentTimeMillis()
         val executionTime = endTime - startTime
-        Log.d("TAG", "executionTime[${glbModel.assetName}]: $executionTime")
+        Log.d("TAG", "executionTime[${glbModelActive.assetName}]: $executionTime")
+    }
+
+    LaunchedEffect(glbModelInactive.assetName) {
+        Log.d("TAG", "executionTime[${glbModelInactive.assetName}]: ")
+        // calculate time to execute commad to load model
+        val startTime = System.currentTimeMillis()
+        shapeInactive = modelRepository.getOrLoadModel(glbModelInactive).getOrNull() as GltfModel?
+        val endTime = System.currentTimeMillis()
+        val executionTime = endTime - startTime
+        Log.d("TAG", "executionTime[${glbModelInactive.assetName}]: $executionTime")
     }
 
     Box(
@@ -429,7 +485,7 @@ fun PanelContent(
         if (gltfEntity != null) {
             Subspace {
                 Volume(
-                    modifier = SubspaceModifier.rotate(axisAngle, rotationValue).alpha(0.1f)
+                    modifier = SubspaceModifier.rotate(axisAngle, rotationValue) // .alpha(0.1f)
                 ) {
                     gltfEntity.setParent(it)
                 }
@@ -623,7 +679,11 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel01Animated, soundObjects[0])
+                PanelContent(
+                    modelRepository = modelRepository,
+                    glbModelActive = GlbModel.GlbModel01Animated,
+                    glbModelInactive = GlbModel.GlbModel01Inactive,
+                    soundObjects[0])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -634,7 +694,11 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel02Animated, soundObjects[1])
+                PanelContent(
+                    modelRepository = modelRepository,
+                    glbModelActive = GlbModel.GlbModel02Animated,
+                    glbModelInactive = GlbModel.GlbModel02Inactive,
+                    soundObjects[1])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -645,7 +709,11 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel03Animated, soundObjects[2])
+                PanelContent(
+                    modelRepository = modelRepository,
+                    glbModelActive = GlbModel.GlbModel03Animated,
+                    glbModelInactive = GlbModel.GlbModel03Inactive,
+                    soundObjects[2])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -656,7 +724,11 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel04Animated, soundObjects[3])
+                PanelContent(
+                    modelRepository = modelRepository,
+                    glbModelActive = GlbModel.GlbModel04Animated,
+                    glbModelInactive = GlbModel.GlbModel04Inactive,
+                    soundObjects[3])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -667,7 +739,11 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel05Animated, soundObjects[4])
+                PanelContent(
+                    modelRepository = modelRepository,
+                    glbModelActive = GlbModel.GlbModel05Animated,
+                    glbModelInactive = GlbModel.GlbModel05Inactive,
+                    soundObjects[4])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -678,7 +754,11 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel06Animated, soundObjects[5])
+                PanelContent(
+                    modelRepository = modelRepository,
+                    glbModelActive = GlbModel.GlbModel06Animated,
+                    glbModelInactive = GlbModel.GlbModel06Inactive,
+                    soundObjects[5])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -689,7 +769,11 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel07Animated, soundObjects[6])
+                PanelContent(
+                    modelRepository = modelRepository,
+                    glbModelActive = GlbModel.GlbModel07Animated,
+                    glbModelInactive = GlbModel.GlbModel07Inactive,
+                    soundObjects[6])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -700,7 +784,11 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel08Animated, soundObjects[7])
+                PanelContent(
+                    modelRepository = modelRepository,
+                    glbModelActive = GlbModel.GlbModel08Animated,
+                    glbModelInactive = GlbModel.GlbModel08Inactive,
+                    soundObjects[7])
             }
         }
         SpatialLayoutSpacer(modifier = SubspaceModifier.size(48.dp))
@@ -711,7 +799,11 @@ fun ModelsSpatialPanelRow(
                 modifier = Modifier
                     .background(Color.Transparent)
             ) {
-                PanelContent(modelRepository = modelRepository, glbModel = GlbModel.GlbModel09Animated, soundObjects[8])
+                PanelContent(
+                    modelRepository = modelRepository,
+                    glbModelActive = GlbModel.GlbModel09Animated,
+                    glbModelInactive = GlbModel.GlbModel09Inactive,
+                    soundObjects[8])
             }
         }
     }

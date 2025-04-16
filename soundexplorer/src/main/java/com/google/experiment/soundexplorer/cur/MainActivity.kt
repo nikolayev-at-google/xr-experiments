@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                 mainExecutor,
                 lifecycleScope)
 
-            checkNotNull(soundObjs[i]).setHidden(true)
+            checkNotNull(soundObjs[i]).hidden = true
         }
         return soundObjs.map({o -> checkNotNull(o)}).toTypedArray()
     }
