@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -102,6 +103,7 @@ fun Toolbar(
     modifier: Modifier = Modifier
 ) {
     val isModelsVisible by viewModel.isModelsVisible.collectAsState()
+    val isSoundObjectsVisible by viewModel.isSoundObjectsHidden.collectAsState()
 
     Box(
         modifier = modifier
@@ -120,11 +122,14 @@ fun Toolbar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Refresh button
-            IconButton(onClick = onRefreshClick) {
+            IconButton(
+                onClick = onRefreshClick,
+                enabled = !isSoundObjectsVisible
+            ) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Refresh",
-                    tint = Color.White
+                    tint = if (!isSoundObjectsVisible) Color.White else Color.Gray
                 )
             }
 
@@ -133,7 +138,10 @@ fun Toolbar(
                 onClick = onAddClick,
                 modifier = Modifier
                     .size(48.dp)
-                    .background(if (isModelsVisible) Color(0xFFC2E7FF) else Color( 0xFFE6E6E6), CircleShape)
+                    .background(
+                        if (isModelsVisible) Color(0xFFC2E7FF) else Color(0xFFE6E6E6),
+                        CircleShape
+                    )
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -142,10 +150,17 @@ fun Toolbar(
                 )
             }
 
+            try {
+                Log.d("", "Toolbar: ${viewModel.soundComposition}")
+            } catch (e: Exception) {
+                return
+            }
+
             // play/pause button
             when (viewModel.soundComposition.state.collectAsState().value) {
                 SoundComposition.State.LOADING -> {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { },
+                        enabled = !isSoundObjectsVisible) {
                         Icon(
                             imageVector = Icons.Outlined.PlayArrow,
                             contentDescription = "Loading",
@@ -154,29 +169,32 @@ fun Toolbar(
                     }
                 }
                 SoundComposition.State.READY -> {
-                    IconButton(onClick = { viewModel.soundComposition.play() }) {
+                    IconButton(onClick = { viewModel.soundComposition.play() },
+                        enabled = !isSoundObjectsVisible) {
                         Icon(
                             imageVector = Icons.Outlined.PlayArrow,
                             contentDescription = "Play",
-                            tint = Color.White
+                            tint = if (!isSoundObjectsVisible) Color.White else Color.Gray
                         )
                     }
                 }
                 SoundComposition.State.PLAYING -> {
-                    IconButton(onClick = { viewModel.soundComposition.stop() }) {
+                    IconButton(onClick = { viewModel.soundComposition.stop() },
+                        enabled = !isSoundObjectsVisible) {
                         Icon(
                             imageVector = ImageVector.vectorResource(com.google.experiment.soundexplorer.R.drawable.ic_pause),
                             contentDescription = "Pause",
-                            tint = Color.White
+                            tint = if (!isSoundObjectsVisible) Color.White else Color.Gray
                         )
                     }
                 }
                 SoundComposition.State.STOPPED -> {
-                    IconButton(onClick = { viewModel.soundComposition.play() }) {
+                    IconButton(onClick = { viewModel.soundComposition.play() },
+                        enabled = !isSoundObjectsVisible) {
                         Icon(
                             imageVector = Icons.Outlined.PlayArrow,
                             contentDescription = "Play",
-                            tint = Color.White
+                            tint = if (!isSoundObjectsVisible) Color.White else Color.Gray
                         )
                     }
                 }
@@ -222,13 +240,25 @@ fun MainScreen(
 fun ToolbarContent(
     viewModel: MainViewModel = viewModel()
 ) {
-    Toolbar(
-        onRefreshClick = { viewModel.showDialog() },
-        onAddClick = { viewModel.showModels() },
+    Box(
         modifier = Modifier
-            .padding(bottom = 16.dp)
-            .width(160.dp)
-    )
+            .fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Toolbar(
+            onRefreshClick = { viewModel.showDialog() },
+            onAddClick = { viewModel.showModels() },
+            modifier = Modifier
+                .padding(bottom = 16.dp)
+                .width(160.dp)
+        )
+    }
+}
+
+@Preview
+@Composable
+fun ToolbarPreview() {
+    ToolbarContent()
 }
 
 @Composable

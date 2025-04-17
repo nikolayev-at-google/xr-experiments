@@ -3,6 +3,7 @@ package com.google.experiment.soundexplorer.cur
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
@@ -62,8 +63,8 @@ class MainActivity : ComponentActivity() {
     private val sceneCoreSession by lazy { Session.create(this) }
     private var soundComponents: Array<SoundComposition.SoundCompositionComponent>? = null
     private var soundObjects: Array<SoundObjectComponent>? = null
-//    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
-    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.1f, -1.9f)))
+    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
+//    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.1f, -1.9f)))
 
     private var modelsLoaded: Boolean by mutableStateOf(false)
     private var soundObjectsReady: Boolean by mutableStateOf(false)
@@ -178,7 +179,8 @@ class MainActivity : ComponentActivity() {
                 ToolbarContent()
             } else {
                 Box(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .height(56.dp)
                         .background(
                             color = Color(0xFF2D2E31),
@@ -270,6 +272,9 @@ class MainActivity : ComponentActivity() {
                             soundObject.setPose(initialLocation)
                             soundObject.hidden = false
                             soundObject.soundComponent.play()
+                            viewModel.updateSoundObjectsVisibility(
+                                soundObjects?.all { so -> so.hidden } ?: false
+                            )
                         } else if (ie.action == InputEvent.ACTION_HOVER_ENTER) {
                             shapeActiveEntity.setScale(1.4f)
                         } else if (ie.action == InputEvent.ACTION_HOVER_EXIT) {
@@ -287,6 +292,9 @@ class MainActivity : ComponentActivity() {
                             val soundObject = checkNotNull(soundObjects)[i]
                             soundObject.soundComponent.stop()
                             soundObject.hidden = true
+                            viewModel.updateSoundObjectsVisibility(
+                                soundObjects?.all { so -> so.hidden } ?: false
+                            )
                         } else if (ie.action == InputEvent.ACTION_HOVER_ENTER) {
                             shapeInactiveEntity.setScale(1.4f)
                         } else if (ie.action == InputEvent.ACTION_HOVER_EXIT) {

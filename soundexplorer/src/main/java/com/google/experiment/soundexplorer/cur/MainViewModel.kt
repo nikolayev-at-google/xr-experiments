@@ -35,6 +35,13 @@ class MainViewModel @Inject constructor(
     val soundComposition: SoundComposition
         get() { return checkNotNull(_soundComposition) }
 
+    private val _isSoundObjectsHidden = MutableStateFlow(true)
+    val isSoundObjectsHidden = _isSoundObjectsHidden.asStateFlow()
+
+    fun updateSoundObjectsVisibility(isVisible: Boolean) {
+        _isSoundObjectsHidden.value = isVisible
+    }
+
     // Action to show dialog
     fun showDialog() {
         _isDialogVisible.value = !_isDialogVisible.value
