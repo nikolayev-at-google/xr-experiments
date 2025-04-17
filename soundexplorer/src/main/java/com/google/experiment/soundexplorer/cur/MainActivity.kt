@@ -5,7 +5,6 @@ import android.app.Activity
 import android.os.Bundle
 import android.view.View
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -32,8 +30,6 @@ import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import androidx.xr.compose.platform.LocalSession
-import androidx.xr.compose.spatial.Subspace
 import androidx.xr.runtime.math.Pose
 import androidx.xr.runtime.math.Quaternion
 import androidx.xr.runtime.math.Vector3
@@ -49,9 +45,7 @@ import com.google.experiment.soundexplorer.core.GlbModel
 import com.google.experiment.soundexplorer.core.GlbModelRepository
 import com.google.experiment.soundexplorer.sound.SoundComposition
 import com.google.experiment.soundexplorer.ui.SoundObjectComponent
-import com.google.experiment.soundexplorer.ui.Toolbar
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -68,8 +62,8 @@ class MainActivity : ComponentActivity() {
     private val sceneCoreSession by lazy { Session.create(this) }
     private var soundComponents: Array<SoundComposition.SoundCompositionComponent>? = null
     private var soundObjects: Array<SoundObjectComponent>? = null
-    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
-//    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, 0.0f, -1.5f)))
+//    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
+    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.1f, -1.9f)))
 
     private var modelsLoaded: Boolean by mutableStateOf(false)
     private var soundObjectsReady: Boolean by mutableStateOf(false)
@@ -77,7 +71,7 @@ class MainActivity : ComponentActivity() {
     fun createSoundObjects(
         glbModels : Array<GlbModel>
     ): Array<SoundObjectComponent> {
-        var soundObjs = Array<SoundObjectComponent?>(checkNotNull(soundComponents).size) { null }
+        val soundObjs = Array<SoundObjectComponent?>(checkNotNull(soundComponents).size) { null }
         for (i in soundObjs.indices) {
             soundObjs[i] = SoundObjectComponent.createSoundObject(
                 sceneCoreSession,
