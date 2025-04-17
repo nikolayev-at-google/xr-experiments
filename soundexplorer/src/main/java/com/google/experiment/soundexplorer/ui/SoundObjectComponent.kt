@@ -16,6 +16,7 @@ import com.google.experiment.soundexplorer.core.GlbModel
 import com.google.experiment.soundexplorer.core.GlbModelRepository
 import com.google.experiment.soundexplorer.sound.SoundComposition
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executor
 
 class SoundObjectComponent(
@@ -51,6 +52,8 @@ class SoundObjectComponent(
 
             manipulationEntity.addComponent(soc)
 
+            soc.hidden = true
+
             return soc
         }
     }
@@ -73,7 +76,15 @@ class SoundObjectComponent(
                 throw IllegalStateException("Tried to set hidden state on sound object when entity was detached!")
             }
 
+            if (value == e.isHidden()){
+                return
+            }
+
             e.setHidden(value)
+
+            if (!value) {
+                coroutineScope.launch { initialize() }
+            }
         }
 
     override fun onAttach(entity: Entity): Boolean {
@@ -95,14 +106,12 @@ class SoundObjectComponent(
         e.setPose(pose)
     }
 
-    suspend fun initialize(initialLocation: Pose) {
-        val e = checkNotNull(this.entity)
-
-        e.setPose(initialLocation)
-
+    private suspend fun initialize() {
         if (this.isInitialized) {
             return
         }
+
+        val e = checkNotNull(this.entity)
 
         val gltfModel = modelRepository.getOrLoadModel(glbModel).getOrNull() as GltfModel?
         if (gltfModel == null) {
