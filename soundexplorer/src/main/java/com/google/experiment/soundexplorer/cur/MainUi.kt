@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -48,6 +49,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -144,7 +147,7 @@ fun Toolbar(
                 SoundComposition.State.LOADING -> {
                     IconButton(onClick = { }) {
                         Icon(
-                            imageVector = Icons.Default.PlayArrow,
+                            imageVector = Icons.Outlined.PlayArrow,
                             contentDescription = "Loading",
                             tint = Color.Gray
                         )
@@ -153,7 +156,7 @@ fun Toolbar(
                 SoundComposition.State.READY -> {
                     IconButton(onClick = { viewModel.soundComposition.play() }) {
                         Icon(
-                            imageVector = Icons.Default.PlayArrow,
+                            imageVector = Icons.Outlined.PlayArrow,
                             contentDescription = "Play",
                             tint = Color.White
                         )
@@ -162,7 +165,7 @@ fun Toolbar(
                 SoundComposition.State.PLAYING -> {
                     IconButton(onClick = { viewModel.soundComposition.stop() }) {
                         Icon(
-                            imageVector = Icons.Default.Close, // todo- should be a pause or stop icon
+                            imageVector = ImageVector.vectorResource(com.google.experiment.soundexplorer.R.drawable.ic_pause),
                             contentDescription = "Pause",
                             tint = Color.White
                         )
@@ -171,7 +174,7 @@ fun Toolbar(
                 SoundComposition.State.STOPPED -> {
                     IconButton(onClick = { viewModel.soundComposition.play() }) {
                         Icon(
-                            imageVector = Icons.Default.PlayArrow,
+                            imageVector = Icons.Outlined.PlayArrow,
                             contentDescription = "Play",
                             tint = Color.White
                         )
@@ -369,9 +372,9 @@ fun PanelContent(
     var shapeInactive by remember { mutableStateOf<GltfModel?>(null) }
 
     val scope = rememberCoroutineScope()
-    var initializeSoundObjectJob by remember {
+    /* var initializeSoundObjectJob by remember {
         mutableStateOf<Job?>(null)
-    }
+    } */
 
     val mainExecutor = LocalActivity.current!!.mainExecutor
 
@@ -400,7 +403,7 @@ fun PanelContent(
                                 // gltfInactiveModelEntity.startAnimation(loop = false)
                                 gltfActiveModelEntity.setHidden(true)
 
-                                if (initializeSoundObjectJob == null) {
+                                /* if (initializeSoundObjectJob == null) {
                                     initializeSoundObjectJob = scope.launch(Dispatchers.Main) {
                                         if (session.spatialUser.head == null) {
                                             return@launch
@@ -414,7 +417,7 @@ fun PanelContent(
                                         soundObject.hidden = false
                                         soundObject.soundComponent.play()
                                     }
-                                } else {
+                                } else { */
                                     val initialLocation = checkNotNull(session.spatialUser.head).transformPoseTo(
                                         Pose(Vector3.Forward * 1.0f, Quaternion.Identity),
                                         session.activitySpace)
@@ -422,7 +425,7 @@ fun PanelContent(
                                     soundObject.setPose(initialLocation)
                                     soundObject.hidden = false
                                     soundObject.soundComponent.play()
-                                }
+                                // }
                             } else if (ie.action == InputEvent.ACTION_HOVER_ENTER) {
                                 gltfActiveModelEntity.setScale(1.4f)
                             } else if (ie.action == InputEvent.ACTION_HOVER_EXIT) {
