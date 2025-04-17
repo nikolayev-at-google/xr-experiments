@@ -203,39 +203,6 @@ fun Toolbar(
     }
 }
 
-// MainScreen.kt
-@Composable
-fun MainScreen(
-    modelRepository : GlbModelRepository,
-    soundObjects: Array<SoundObjectComponent>,
-    viewModel: MainViewModel = viewModel()
-) {
-    val isDialogVisible by viewModel.isDialogVisible.collectAsState()
-    val isModelsVisible by viewModel.isModelsVisible.collectAsState()
-
-    SpatialBox(
-        alignment = SpatialAlignment.Center,
-    ) {
-
-        if (isModelsVisible) {
-            ModelsSpatialPanelRow(modelRepository, soundObjects)
-        }
-
-        SpatialPanel {} // need to anchor orbiter
-        Orbiter(
-            position = OrbiterEdge.Bottom,
-            offset = 96.dp
-        ) {
-            ToolbarContent()
-        }
-
-        // Dialog
-        if (isDialogVisible) {
-            RestartDialog()
-        }
-    }
-}
-
 @Composable
 fun ToolbarContent(
     viewModel: MainViewModel = viewModel()
@@ -271,7 +238,9 @@ fun RestartDialog() {
 }
 
 @Composable
-fun RestartDialogContent() {
+fun RestartDialogContent(
+    viewModel: MainViewModel = viewModel()
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -313,7 +282,7 @@ fun RestartDialogContent() {
             ) {
                 // Delete Button
                 Button(
-                    onClick = {},
+                    onClick = { viewModel.deleteAll() },
                     modifier = Modifier.width(120.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF3C3C3C)
@@ -329,7 +298,7 @@ fun RestartDialogContent() {
 
                 // Cancel Button (positioned to the right of Delete)
                 TextButton(
-                    onClick = {  },
+                    onClick = { viewModel.showDialog() },
 //                            modifier = Modifier
 //                                .padding(start = 160.dp)
                 ) {

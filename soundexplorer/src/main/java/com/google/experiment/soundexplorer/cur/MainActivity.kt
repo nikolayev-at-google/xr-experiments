@@ -63,8 +63,11 @@ class MainActivity : ComponentActivity() {
     private val sceneCoreSession by lazy { Session.create(this) }
     private var soundComponents: Array<SoundComposition.SoundCompositionComponent>? = null
     private var soundObjects: Array<SoundObjectComponent>? = null
-    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f)))
-//    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.1f, -1.9f)))
+    private val activeMenuObjects = mutableListOf<GltfModelEntity>()
+    private val inactiveMenuObjects = mutableListOf<GltfModelEntity>()
+    private var userDialogForward: Pose by mutableStateOf(Pose(Vector3(0.0f, 1.0f, -1.5f)))
+//    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.8f, -1.5f))) // for emulator
+    private var userForward: Pose by mutableStateOf(Pose(Vector3(0.0f, -0.1f, -2.0f)))// for device
 
     private var modelsLoaded: Boolean by mutableStateOf(false)
     private var soundObjectsReady: Boolean by mutableStateOf(false)
@@ -134,6 +137,8 @@ class MainActivity : ComponentActivity() {
 
         createHeadLockedPanelUi()
         createModels(GlbModel.allGlbAnimatedModels, GlbModel.allGlbInactiveModels)
+
+        createHeadLockedDialogUi()
     }
 
     private fun createPanelView(
@@ -303,6 +308,8 @@ class MainActivity : ComponentActivity() {
                     })
                 shapeInactiveEntity.setHidden(true)
 
+                activeMenuObjects.add(shapeActiveEntity)
+                inactiveMenuObjects.add(shapeInactiveEntity)
                 delta -= 0.15f
             }
 
@@ -315,6 +322,49 @@ class MainActivity : ComponentActivity() {
             launch {
                 viewModel.isModelsVisible.collect {
                     menu.setHidden(!it)
+                }
+            }
+        }
+    }
+
+    private fun createHeadLockedDialogUi() {
+        val headLockedDialogPanelView = createPanelView(this) {
+            RestartDialogContent()
+        }
+        val headLockedDialogPanel = createPanelUi(
+            session = sceneCoreSession,
+            view = headLockedDialogPanelView,
+            surfaceDimensionsPx = Dimensions(800f, 490f),
+            dimensions = Dimensions(10f, 10f),
+            panelName = "headLockedDialogPanel",
+            pose = userDialogForward
+        )
+        headLockedDialogPanel.setHidden(true)
+        lifecycleScope.launch {
+            viewModel.toolbarPose.collect { toolbarPose ->
+                headLockedDialogPanel.setPose(
+                    toolbarPose.translate(toolbarPose.up * 0.2f)
+                )
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.isDialogHidden.collect { hidden ->
+                headLockedDialogPanel.setHidden(hidden)
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.deleteAll.collect { event ->
+                if (event.value) {
+
+                    soundObjects?.forEach {
+                        it.soundComponent.stop()
+                        it.hidden = true
+                    }
+                    viewModel.updateSoundObjectsVisibility(true)
+                    activeMenuObjects.forEach { it.setHidden(false) }
+                    inactiveMenuObjects.forEach { it.setHidden(true) }
+
+                    viewModel.showDialog() // switch visibility
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.google.experiment.soundexplorer.cur
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.xr.runtime.math.Pose
 import androidx.xr.scenecore.Session
@@ -15,8 +16,8 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
 ) : ViewModel() {
     // UI state to track if the dialog is showing
-    private val _isDialogVisible = MutableStateFlow(false)
-    val isDialogVisible = _isDialogVisible.asStateFlow()
+    private val _isDialogHidden = MutableStateFlow(true)
+    val isDialogHidden = _isDialogHidden.asStateFlow()
 
     private val _isModelsVisible = MutableStateFlow(false)
     val isModelsVisible = _isModelsVisible.asStateFlow()
@@ -38,19 +39,21 @@ class MainViewModel @Inject constructor(
     private val _isSoundObjectsHidden = MutableStateFlow(true)
     val isSoundObjectsHidden = _isSoundObjectsHidden.asStateFlow()
 
-    fun updateSoundObjectsVisibility(isVisible: Boolean) {
-        _isSoundObjectsHidden.value = isVisible
+    class DeleteAll(val value: Boolean = false)
+    private val _deleteAll = MutableStateFlow(DeleteAll())
+    val deleteAll = _deleteAll.asStateFlow()
+
+    fun updateSoundObjectsVisibility(isHidden: Boolean) {
+        _isSoundObjectsHidden.value = isHidden
     }
 
     // Action to show dialog
     fun showDialog() {
-        _isDialogVisible.value = !_isDialogVisible.value
-        _isModelsVisible.value = false
+        _isDialogHidden.value = !_isDialogHidden.value
     }
 
     fun showModels() {
         _isModelsVisible.value = !_isModelsVisible.value
-        _isDialogVisible.value = false
     }
 
     fun initializeSoundComposition(session: Session) {
@@ -66,5 +69,9 @@ class MainViewModel @Inject constructor(
 
     fun setToolbarPose(pose: Pose) {
         _toolbarPose.value = pose
+    }
+
+    fun deleteAll() {
+        _deleteAll.value = DeleteAll(true)
     }
 }
